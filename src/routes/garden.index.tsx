@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Shell, PageHeader } from "@/components/portfolio/Shell";
 import { useQuery } from "@tanstack/react-query";
 import { listPublishedPosts } from "@/lib/blog.functions";
+import { GardenListSkeleton } from "@/components/skeletons/GardenSkeletons";
 import { SITE_NAME } from "@/lib/site-config";
 import type { BlogPost } from "@/lib/portfolio-types";
 
@@ -9,7 +10,10 @@ export const Route = createFileRoute("/garden/")({
   head: () => ({
     meta: [
       { title: `Digital Garden — ${SITE_NAME}` },
-      { name: "description", content: "Notes, recipes, and references from my engineering practice." },
+      {
+        name: "description",
+        content: "Notes, recipes, and references from my engineering practice.",
+      },
     ],
   }),
   component: GardenPage,
@@ -34,7 +38,7 @@ function GardenPage() {
         description="Notes I keep for myself, organized by topic."
       />
       {isLoading ? (
-        <p className="text-muted-foreground">Loading…</p>
+        <GardenListSkeleton count={5} />
       ) : Object.keys(groups).length === 0 ? (
         <div className="rounded-md border border-dashed border-border p-12 text-center text-sm text-muted-foreground">
           No entries yet.

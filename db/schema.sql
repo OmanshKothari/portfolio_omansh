@@ -50,9 +50,11 @@ CREATE TABLE IF NOT EXISTS site_settings (
   name          TEXT NOT NULL DEFAULT '',
   role          TEXT NOT NULL DEFAULT '',
   tagline       TEXT NOT NULL DEFAULT '',
+  about         TEXT NOT NULL DEFAULT '',          -- rich-text bio (HTML)
   contact_email TEXT NOT NULL DEFAULT '',
   linkedin_url  TEXT NOT NULL DEFAULT '',
-  github_url    TEXT NOT NULL DEFAULT ''
+  github_url    TEXT NOT NULL DEFAULT '',
+  skills        TEXT NOT NULL DEFAULT '[]'         -- JSON array of {category, items[]}
 );
 
 -- Contact form submissions from visitors.

@@ -53,8 +53,10 @@ npm run db:seed
 npm run dev
 ```
 
-The site runs at the URL Vite prints (default `http://localhost:8080`). Sign in
-at `/auth` with the `ADMIN_EMAIL` / password you configured.
+The site runs at the URL Vite prints (default `http://localhost:8080`). There is
+no visible sign-in link — open `/auth/<AUTH_ACCESS_KEY>` and sign in with the
+`ADMIN_EMAIL` / password you configured. (In local dev, if `AUTH_ACCESS_KEY` is
+unset, any `/auth/<anything>` works; in production the key is required.)
 
 ## Environment variables
 
@@ -68,6 +70,7 @@ to the browser. See `.env.example` for the annotated template.
 | `ADMIN_EMAIL`         | yes      | The only account allowed to sign in. There is no signup.       |
 | `ADMIN_PASSWORD_HASH` | yes      | `scrypt` hash from `npm run hash-password`. Format `salt:key`. |
 | `SESSION_SECRET`      | yes      | Random secret signing the session cookie (≥ 48 random bytes).  |
+| `AUTH_ACCESS_KEY`     | prod     | Secret segment for the sign-in URL `/auth/<key>`. Required in production. |
 
 ## Scripts
 

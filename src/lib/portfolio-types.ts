@@ -37,13 +37,22 @@ export type TimelineItem = {
   updated_at: string;
 };
 
+/** A named group of skills shown on the dashboard, e.g. { category: "Languages", items: ["Go", "TypeScript"] }. */
+export type SkillGroup = {
+  category: string;
+  items: string[];
+};
+
 export type SiteSettings = {
   name: string;
   role: string;
   tagline: string;
+  /** Rich-text bio stored as HTML (authored with RichEditor). */
+  about: string;
   contact_email: string;
   linkedin_url: string;
   github_url: string;
+  skills: SkillGroup[];
 };
 
 export type ContactMessage = {

@@ -40,6 +40,14 @@ export const login = createServerFn({ method: "POST" })
     return { ok: true as const };
   });
 
+/** Validate the secret access key that gates the sign-in page. */
+export const checkAuthAccessKey = createServerFn({ method: "GET" })
+  .inputValidator(z.object({ key: z.string() }))
+  .handler(async ({ data }) => {
+    const { accessKeyValid } = await import("./auth.server");
+    return { valid: accessKeyValid(data.key) };
+  });
+
 /** Clear the admin session. */
 export const logout = createServerFn({ method: "POST" }).handler(async () => {
   const { endSession } = await import("./auth.server");

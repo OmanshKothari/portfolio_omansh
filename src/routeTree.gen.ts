@@ -13,13 +13,13 @@ import { Route as TimelineRouteImport } from './routes/timeline'
 import { Route as ProjectsRouteImport } from './routes/projects'
 import { Route as GardenRouteImport } from './routes/garden'
 import { Route as ContactRouteImport } from './routes/contact'
-import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProjectsIndexRouteImport } from './routes/projects.index'
 import { Route as GardenIndexRouteImport } from './routes/garden.index'
 import { Route as ProjectsSlugRouteImport } from './routes/projects.$slug'
 import { Route as GardenSlugRouteImport } from './routes/garden.$slug'
+import { Route as AuthKeyRouteImport } from './routes/auth.$key'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
 import { Route as AuthenticatedAdminProjectsNewRouteImport } from './routes/_authenticated/admin/projects/new'
 import { Route as AuthenticatedAdminProjectsIdRouteImport } from './routes/_authenticated/admin/projects/$id'
@@ -44,11 +44,6 @@ const GardenRoute = GardenRouteImport.update({
 const ContactRoute = ContactRouteImport.update({
   id: '/contact',
   path: '/contact',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthRoute = AuthRouteImport.update({
-  id: '/auth',
-  path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
@@ -79,6 +74,11 @@ const GardenSlugRoute = GardenSlugRouteImport.update({
   id: '/$slug',
   path: '/$slug',
   getParentRoute: () => GardenRoute,
+} as any)
+const AuthKeyRoute = AuthKeyRouteImport.update({
+  id: '/auth/$key',
+  path: '/auth/$key',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
   id: '/admin/',
@@ -112,11 +112,11 @@ const AuthenticatedAdminGardenIdRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/auth': typeof AuthRoute
   '/contact': typeof ContactRoute
   '/garden': typeof GardenRouteWithChildren
   '/projects': typeof ProjectsRouteWithChildren
   '/timeline': typeof TimelineRoute
+  '/auth/$key': typeof AuthKeyRoute
   '/garden/$slug': typeof GardenSlugRoute
   '/projects/$slug': typeof ProjectsSlugRoute
   '/garden/': typeof GardenIndexRoute
@@ -129,9 +129,9 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/auth': typeof AuthRoute
   '/contact': typeof ContactRoute
   '/timeline': typeof TimelineRoute
+  '/auth/$key': typeof AuthKeyRoute
   '/garden/$slug': typeof GardenSlugRoute
   '/projects/$slug': typeof ProjectsSlugRoute
   '/garden': typeof GardenIndexRoute
@@ -146,11 +146,11 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
-  '/auth': typeof AuthRoute
   '/contact': typeof ContactRoute
   '/garden': typeof GardenRouteWithChildren
   '/projects': typeof ProjectsRouteWithChildren
   '/timeline': typeof TimelineRoute
+  '/auth/$key': typeof AuthKeyRoute
   '/garden/$slug': typeof GardenSlugRoute
   '/projects/$slug': typeof ProjectsSlugRoute
   '/garden/': typeof GardenIndexRoute
@@ -165,11 +165,11 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/auth'
     | '/contact'
     | '/garden'
     | '/projects'
     | '/timeline'
+    | '/auth/$key'
     | '/garden/$slug'
     | '/projects/$slug'
     | '/garden/'
@@ -182,9 +182,9 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/auth'
     | '/contact'
     | '/timeline'
+    | '/auth/$key'
     | '/garden/$slug'
     | '/projects/$slug'
     | '/garden'
@@ -198,11 +198,11 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/_authenticated'
-    | '/auth'
     | '/contact'
     | '/garden'
     | '/projects'
     | '/timeline'
+    | '/auth/$key'
     | '/garden/$slug'
     | '/projects/$slug'
     | '/garden/'
@@ -217,11 +217,11 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
-  AuthRoute: typeof AuthRoute
   ContactRoute: typeof ContactRoute
   GardenRoute: typeof GardenRouteWithChildren
   ProjectsRoute: typeof ProjectsRouteWithChildren
   TimelineRoute: typeof TimelineRoute
+  AuthKeyRoute: typeof AuthKeyRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -252,13 +252,6 @@ declare module '@tanstack/react-router' {
       path: '/contact'
       fullPath: '/contact'
       preLoaderRoute: typeof ContactRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/auth': {
-      id: '/auth'
-      path: '/auth'
-      fullPath: '/auth'
-      preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated': {
@@ -302,6 +295,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/garden/$slug'
       preLoaderRoute: typeof GardenSlugRouteImport
       parentRoute: typeof GardenRoute
+    }
+    '/auth/$key': {
+      id: '/auth/$key'
+      path: '/auth/$key'
+      fullPath: '/auth/$key'
+      preLoaderRoute: typeof AuthKeyRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/admin/': {
       id: '/_authenticated/admin/'
@@ -390,11 +390,11 @@ const ProjectsRouteWithChildren = ProjectsRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
-  AuthRoute: AuthRoute,
   ContactRoute: ContactRoute,
   GardenRoute: GardenRouteWithChildren,
   ProjectsRoute: ProjectsRouteWithChildren,
   TimelineRoute: TimelineRoute,
+  AuthKeyRoute: AuthKeyRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

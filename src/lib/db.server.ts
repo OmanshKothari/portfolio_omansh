@@ -2,7 +2,14 @@
 // Import this lazily from inside server-function handlers (await import(...)),
 // never from client code — it reads secret env vars.
 import { createClient, type Client, type Row } from "@libsql/client";
-import type { Project, BlogPost, TimelineItem, SiteSettings, ContactMessage } from "./portfolio-types";
+import type {
+  Project,
+  BlogPost,
+  TimelineItem,
+  SiteSettings,
+  ContactMessage,
+  SkillGroup,
+} from "./portfolio-types";
 
 function createDbClient(): Client {
   // Defaults to a local SQLite file for dev; production sets the Turso URL+token.
@@ -26,6 +33,23 @@ const parseArr = (v: unknown): string[] => {
   try {
     const parsed = JSON.parse(String(v));
     return Array.isArray(parsed) ? parsed.map(String) : [];
+  } catch {
+    return [];
+  }
+};
+
+/** Parse a JSON column into validated SkillGroup[]; drops malformed entries. */
+const parseSkills = (v: unknown): SkillGroup[] => {
+  if (v == null) return [];
+  try {
+    const parsed = JSON.parse(String(v));
+    if (!Array.isArray(parsed)) return [];
+    return parsed
+      .filter((g): g is { category: unknown; items: unknown } => g && typeof g === "object")
+      .map((g) => ({
+        category: str(g.category),
+        items: Array.isArray(g.items) ? g.items.map(String) : [],
+      }));
   } catch {
     return [];
   }
@@ -81,9 +105,11 @@ export function rowToSiteSettings(r: Row): SiteSettings {
     name: str(r.name),
     role: str(r.role),
     tagline: str(r.tagline),
+    about: str(r.about),
     contact_email: str(r.contact_email),
     linkedin_url: str(r.linkedin_url),
     github_url: str(r.github_url),
+    skills: parseSkills(r.skills),
   };
 }
 

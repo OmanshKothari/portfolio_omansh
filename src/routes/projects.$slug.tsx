@@ -37,7 +37,10 @@ function ProjectDetail() {
 
   return (
     <Shell>
-      <Link to="/projects" className="font-mono text-xs text-muted-foreground hover:text-foreground">
+      <Link
+        to="/projects"
+        className="font-mono text-xs text-muted-foreground hover:text-foreground"
+      >
         ← projects
       </Link>
       <article className="mt-6">
@@ -52,12 +55,22 @@ function ProjectDetail() {
         {(data.github_url || data.demo_url) && (
           <div className="mt-5 flex gap-4 font-mono text-xs">
             {data.github_url && (
-              <a href={data.github_url} target="_blank" rel="noreferrer" className="text-primary hover:underline">
+              <a
+                href={data.github_url}
+                target="_blank"
+                rel="noreferrer"
+                className="text-primary hover:underline"
+              >
                 [GitHub]
               </a>
             )}
             {data.demo_url && (
-              <a href={data.demo_url} target="_blank" rel="noreferrer" className="text-primary hover:underline">
+              <a
+                href={data.demo_url}
+                target="_blank"
+                rel="noreferrer"
+                className="text-primary hover:underline"
+              >
                 [Live Demo]
               </a>
             )}
@@ -73,9 +86,10 @@ function ProjectDetail() {
         )}
 
         {data.long_description && (
-          <div className="prose-portfolio mt-8 whitespace-pre-wrap text-sm">
-            {data.long_description}
-          </div>
+          <div
+            className="prose-portfolio mt-8"
+            dangerouslySetInnerHTML={{ __html: data.long_description }}
+          />
         )}
       </article>
     </Shell>

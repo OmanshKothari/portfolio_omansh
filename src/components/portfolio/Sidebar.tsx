@@ -1,8 +1,9 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Moon, Sun, LogIn, LogOut, Settings } from "lucide-react";
+import { Moon, Sun, LogOut, Settings } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useTheme } from "./theme";
 import { useAuth } from "./auth-context";
+import { Logo } from "./Logo";
 import { getSiteSettings, DEFAULT_SETTINGS } from "@/lib/settings.functions";
 
 const nav = [
@@ -19,17 +20,18 @@ export function Sidebar() {
   const { isAdmin, signOut } = useAuth();
   const { data } = useQuery({ queryKey: ["site-settings"], queryFn: () => getSiteSettings() });
   const settings = data ?? DEFAULT_SETTINGS;
-  const initials = settings.name.split(" ").map((n) => n[0]).join("").slice(0, 3);
 
   return (
     <aside className="fixed inset-y-0 left-0 z-20 hidden w-64 flex-col border-r border-sidebar-border bg-sidebar px-6 py-8 md:flex">
       <div className="flex flex-col items-start gap-3">
-        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted text-sm font-mono text-muted-foreground">
-          {initials}
-        </div>
+        <Link to="/" aria-label="Home">
+          <Logo className="h-12 w-12 text-primary" />
+        </Link>
         <div>
           <div className="text-sm font-medium text-foreground">{settings.name}</div>
-          {settings.role && <div className="font-mono text-xs text-muted-foreground">{settings.role}</div>}
+          {settings.role && (
+            <div className="font-mono text-xs text-muted-foreground">{settings.role}</div>
+          )}
         </div>
       </div>
 
@@ -86,20 +88,15 @@ export function Sidebar() {
             {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </button>
         </div>
-        {isAdmin ? (
+        {/* Sign-in is intentionally not linked here — admin reaches login via a
+            secret URL (see /auth/$key). Only the signed-in admin sees Sign out. */}
+        {isAdmin && (
           <button
             onClick={() => signOut()}
             className="flex w-full items-center justify-center gap-2 rounded-md border border-border px-3 py-1.5 font-mono text-xs text-muted-foreground hover:bg-accent hover:text-foreground"
           >
             <LogOut className="h-3 w-3" /> Sign out
           </button>
-        ) : (
-          <Link
-            to="/auth"
-            className="flex items-center justify-center gap-2 rounded-md border border-border px-3 py-1.5 font-mono text-xs text-muted-foreground hover:bg-accent hover:text-foreground"
-          >
-            <LogIn className="h-3 w-3" /> Admin sign in
-          </Link>
         )}
       </div>
     </aside>

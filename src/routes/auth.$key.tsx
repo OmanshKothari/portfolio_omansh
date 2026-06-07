@@ -1,9 +1,9 @@
-import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, Link, notFound } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/components/portfolio/auth-context";
-import { login } from "@/lib/auth.functions";
+import { login, checkAuthAccessKey } from "@/lib/auth.functions";
 
-export const Route = createFileRoute("/auth")({
+export const Route = createFileRoute("/auth/$key")({
   head: () => ({
     meta: [
       { title: "Admin Sign In" },
@@ -11,6 +11,12 @@ export const Route = createFileRoute("/auth")({
       { name: "robots", content: "noindex" },
     ],
   }),
+  // Gate on the secret key (validated server-side). A wrong/missing key renders
+  // a normal 404 so the login page can't be discovered by probing.
+  loader: async ({ params }) => {
+    const { valid } = await checkAuthAccessKey({ data: { key: params.key } });
+    if (!valid) throw notFound();
+  },
   component: AuthPage,
 });
 
@@ -47,7 +53,9 @@ function AuthPage() {
         <Link to="/" className="font-mono text-xs text-muted-foreground hover:text-foreground">
           ← back to site
         </Link>
-        <h1 className="mt-6 text-2xl font-semibold tracking-tight text-foreground">Admin sign in</h1>
+        <h1 className="mt-6 text-2xl font-semibold tracking-tight text-foreground">
+          Admin sign in
+        </h1>
         <p className="mt-2 text-sm text-muted-foreground">
           Sign in to manage projects, the digital garden, your timeline, and your profile.
         </p>

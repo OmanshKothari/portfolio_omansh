@@ -5,7 +5,8 @@ export const Route = createFileRoute("/_authenticated")({
   ssr: false,
   beforeLoad: async () => {
     const { isAdmin } = await me();
-    if (!isAdmin) throw redirect({ to: "/auth" });
+    // Redirect to home (never to the secret sign-in path) so it isn't leaked.
+    if (!isAdmin) throw redirect({ to: "/" });
     return { isAdmin };
   },
   component: () => <Outlet />,

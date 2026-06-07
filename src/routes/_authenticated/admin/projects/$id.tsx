@@ -3,6 +3,7 @@ import { Shell, PageHeader } from "@/components/portfolio/Shell";
 import { useEffect, useState } from "react";
 import { slugify, type Project } from "@/lib/portfolio-types";
 import { getProjectById, upsertProject } from "@/lib/projects.functions";
+import { RichEditor } from "@/components/portfolio/RichEditor";
 import { X } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin/projects/$id")({
@@ -44,21 +45,12 @@ function EditProjectPage() {
   return (
     <Shell>
       <PageHeader eyebrow="Admin" title="Edit project" />
-      <ProjectForm
-        initial={project}
-        onDone={() => navigate({ to: "/admin" })}
-      />
+      <ProjectForm initial={project} onDone={() => navigate({ to: "/admin" })} />
     </Shell>
   );
 }
 
-export function ProjectForm({
-  initial,
-  onDone,
-}: {
-  initial: Project | null;
-  onDone: () => void;
-}) {
+export function ProjectForm({ initial, onDone }: { initial: Project | null; onDone: () => void }) {
   const [title, setTitle] = useState(initial?.title ?? "");
   const [slug, setSlug] = useState(initial?.slug ?? "");
   const [description, setDescription] = useState(initial?.description ?? "");
@@ -86,7 +78,10 @@ export function ProjectForm({
       slug: slug || slugify(title),
       description,
       long_description: longDescription || null,
-      tags: tagsText.split(",").map((s) => s.trim()).filter(Boolean),
+      tags: tagsText
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean),
       github_url: github || null,
       demo_url: demo || null,
       cover_url: coverUrl || null,
@@ -130,12 +125,10 @@ export function ProjectForm({
         />
       </Field>
       <Field label="Long description (shown on detail page)">
-        <textarea
-          rows={8}
+        <RichEditor
           value={longDescription}
-          onChange={(e) => setLongDescription(e.target.value)}
-          placeholder="Write a longer write-up. Plain text or markdown-ish — newlines are preserved."
-          className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+          onChange={setLongDescription}
+          placeholder="Write a longer write-up — headings, lists, links, and formatting are supported."
         />
       </Field>
       <Field label="Tags (comma separated)">

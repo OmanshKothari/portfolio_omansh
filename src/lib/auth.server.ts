@@ -28,6 +28,20 @@ export function verifyPassword(plain: string): boolean {
   return derived.length === expected.length && timingSafeEqual(derived, expected);
 }
 
+/**
+ * Validate a URL-supplied access key against AUTH_ACCESS_KEY (timing-safe).
+ * The sign-in page lives at a secret path so it isn't discoverable; the key is
+ * an env var (never committed). If AUTH_ACCESS_KEY is unset, access is allowed
+ * only outside production (dev convenience) and denied in production.
+ */
+export function accessKeyValid(key: string): boolean {
+  const expected = process.env.AUTH_ACCESS_KEY;
+  if (!expected) return process.env.NODE_ENV !== "production";
+  const a = Buffer.from(key);
+  const b = Buffer.from(expected);
+  return a.length === b.length && timingSafeEqual(a, b);
+}
+
 /** Whether the supplied credentials match the single configured admin. */
 export function credentialsMatchAdmin(email: string, password: string): boolean {
   const adminEmail = (process.env.ADMIN_EMAIL || "").trim().toLowerCase();
