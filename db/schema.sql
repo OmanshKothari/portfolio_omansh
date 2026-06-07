@@ -54,3 +54,13 @@ CREATE TABLE IF NOT EXISTS site_settings (
   linkedin_url  TEXT NOT NULL DEFAULT '',
   github_url    TEXT NOT NULL DEFAULT ''
 );
+
+-- Contact form submissions from visitors.
+CREATE TABLE IF NOT EXISTS contact_messages (
+  id         TEXT PRIMARY KEY,
+  name       TEXT NOT NULL,
+  email      TEXT NOT NULL,
+  message    TEXT NOT NULL,
+  read       INTEGER NOT NULL DEFAULT 0,           -- 0/1, marks message as read by admin
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);

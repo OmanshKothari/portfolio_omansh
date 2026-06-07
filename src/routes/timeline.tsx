@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Shell, PageHeader } from "@/components/portfolio/Shell";
 import { useQuery } from "@tanstack/react-query";
 import { listTimeline } from "@/lib/timeline.functions";
+import { TimelineSkeletonList } from "@/components/skeletons/TimelineSkeletons";
 import { SITE_NAME } from "@/lib/site-config";
 
 export const Route = createFileRoute("/timeline")({
@@ -29,16 +30,16 @@ function TimelinePage() {
       />
 
       {isLoading ? (
-        <p className="text-muted-foreground">Loading…</p>
+        <TimelineSkeletonList count={3} />
       ) : data && data.length > 0 ? (
         <ul className="space-y-10">
           {data.map((item) => (
             <li
               key={item.id}
-              className="grid grid-cols-[7rem_1.25rem_1fr] gap-x-4"
+              className="grid grid-cols-[10rem_1.25rem_1fr] gap-x-4"
             >
               {/* Dates column */}
-              <div className="pt-1 text-right font-mono text-xs leading-snug text-muted-foreground">
+              <div className="pt-1 text-right font-mono text-xs leading-snug text-muted-foreground whitespace-nowrap">
                 {item.dates}
               </div>
               {/* Rail + dot column */}

@@ -46,6 +46,15 @@ export type SiteSettings = {
   github_url: string;
 };
 
+export type ContactMessage = {
+  id: string;
+  name: string;
+  email: string;
+  message: string;
+  read: boolean;
+  created_at: string;
+};
+
 export const slugify = (s: string) =>
   s
     .toLowerCase()

@@ -2,7 +2,7 @@
 // Import this lazily from inside server-function handlers (await import(...)),
 // never from client code — it reads secret env vars.
 import { createClient, type Client, type Row } from "@libsql/client";
-import type { Project, BlogPost, TimelineItem, SiteSettings } from "./portfolio-types";
+import type { Project, BlogPost, TimelineItem, SiteSettings, ContactMessage } from "./portfolio-types";
 
 function createDbClient(): Client {
   // Defaults to a local SQLite file for dev; production sets the Turso URL+token.
@@ -84,6 +84,17 @@ export function rowToSiteSettings(r: Row): SiteSettings {
     contact_email: str(r.contact_email),
     linkedin_url: str(r.linkedin_url),
     github_url: str(r.github_url),
+  };
+}
+
+export function rowToContactMessage(r: Row): ContactMessage {
+  return {
+    id: str(r.id),
+    name: str(r.name),
+    email: str(r.email),
+    message: str(r.message),
+    read: num(r.read) === 1,
+    created_at: str(r.created_at),
   };
 }
 

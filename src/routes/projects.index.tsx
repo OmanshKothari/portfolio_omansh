@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Shell, PageHeader, Tag } from "@/components/portfolio/Shell";
 import { useQuery } from "@tanstack/react-query";
 import { listProjects } from "@/lib/projects.functions";
+import { ProjectSkeletonGrid } from "@/components/skeletons/ProjectSkeletons";
 import { SITE_NAME } from "@/lib/site-config";
 
 export const Route = createFileRoute("/projects/")({
@@ -28,7 +29,7 @@ function ProjectsPage() {
         description="A small set of systems I built or led."
       />
       {isLoading ? (
-        <p className="text-muted-foreground">Loading…</p>
+        <ProjectSkeletonGrid count={4} />
       ) : data && data.length > 0 ? (
         <div className="grid gap-4 sm:grid-cols-2">
           {data.map((p) => (

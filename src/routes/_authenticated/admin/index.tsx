@@ -1,20 +1,22 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Shell, PageHeader } from "@/components/portfolio/Shell";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { Pencil, Trash2, Plus } from "lucide-react";
+import { Pencil, Trash2, Plus, Mail } from "lucide-react";
 import type { TimelineItem } from "@/lib/portfolio-types";
 import { listProjects, deleteProject } from "@/lib/projects.functions";
 import { listAllPosts, deletePost } from "@/lib/blog.functions";
 import { listTimeline, upsertTimelineItem, deleteTimelineItem } from "@/lib/timeline.functions";
 import { getSiteSettings, updateSiteSettings, DEFAULT_SETTINGS } from "@/lib/settings.functions";
+import { listContactMessages, deleteContactMessage, markContactMessageRead } from "@/lib/contact.functions";
+import { TableSkeletonList } from "@/components/skeletons/TableSkeletons";
 
 export const Route = createFileRoute("/_authenticated/admin/")({
   head: () => ({ meta: [{ title: "Admin" }, { name: "robots", content: "noindex" }] }),
   component: AdminHome,
 });
 
-type Tab = "projects" | "garden" | "timeline" | "profile";
+type Tab = "projects" | "garden" | "timeline" | "messages" | "profile";
 
 function AdminHome() {
   const [tab, setTab] = useState<Tab>("projects");
@@ -26,7 +28,7 @@ function AdminHome() {
         description="Create, edit, and remove projects, garden entries, timeline items, and your profile."
       />
       <div className="mb-6 flex gap-1 border-b border-border">
-        {(["projects", "garden", "timeline", "profile"] as Tab[]).map((t) => (
+        {(["projects", "garden", "timeline", "messages", "profile"] as Tab[]).map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
@@ -37,13 +39,18 @@ function AdminHome() {
                 : "border-transparent text-muted-foreground hover:text-foreground")
             }
           >
-            {t === "garden" ? "Digital Garden" : t.charAt(0).toUpperCase() + t.slice(1)}
+            {t === "garden"
+              ? "Digital Garden"
+              : t === "messages"
+                ? "Messages"
+                : t.charAt(0).toUpperCase() + t.slice(1)}
           </button>
         ))}
       </div>
       {tab === "projects" && <ProjectsAdmin />}
       {tab === "garden" && <GardenAdmin />}
       {tab === "timeline" && <TimelineAdmin />}
+      {tab === "messages" && <MessagesAdmin />}
       {tab === "profile" && <ProfileAdmin />}
     </Shell>
   );
@@ -74,7 +81,7 @@ function ProjectsAdmin() {
         </Link>
       </div>
       {isLoading ? (
-        <p className="text-sm text-muted-foreground">Loading…</p>
+        <TableSkeletonList count={5} />
       ) : data && data.length > 0 ? (
         <ul className="divide-y divide-border rounded-md border border-border">
           {data.map((p) => (
@@ -135,7 +142,7 @@ function GardenAdmin() {
         </Link>
       </div>
       {isLoading ? (
-        <p className="text-sm text-muted-foreground">Loading…</p>
+        <TableSkeletonList count={5} />
       ) : data && data.length > 0 ? (
         <ul className="divide-y divide-border rounded-md border border-border">
           {data.map((p) => (
@@ -200,7 +207,7 @@ function TimelineAdmin() {
         </button>
       </div>
       {isLoading ? (
-        <p className="text-sm text-muted-foreground">Loading…</p>
+        <TableSkeletonList count={5} />
       ) : data && data.length > 0 ? (
         <ul className="divide-y divide-border rounded-md border border-border">
           {data.map((t) => (
@@ -466,6 +473,93 @@ function ProfileAdmin() {
           {saved && <span className="font-mono text-xs text-muted-foreground">Saved.</span>}
         </div>
       </form>
+    </section>
+  );
+}
+
+function MessagesAdmin() {
+  const qc = useQueryClient();
+  const { data, isLoading } = useQuery({
+    queryKey: ["admin-messages"],
+    queryFn: () => listContactMessages(),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: deleteContactMessage,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["admin-messages"] });
+    },
+  });
+
+  const readMutation = useMutation({
+    mutationFn: markContactMessageRead,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["admin-messages"] });
+    },
+  });
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("Delete this message?")) return;
+    await deleteMutation.mutateAsync({ id });
+  };
+
+  const handleToggleRead = async (id: string, currentRead: boolean) => {
+    await readMutation.mutateAsync({ id, read: !currentRead });
+  };
+
+  return (
+    <section>
+      <div className="mb-4">
+        <h2 className="text-sm font-medium text-foreground">Contact Messages</h2>
+      </div>
+      {isLoading ? (
+        <TableSkeletonList count={5} />
+      ) : data && data.length > 0 ? (
+        <div className="space-y-3">
+          {data.map((msg) => (
+            <div
+              key={msg.id}
+              className="rounded-lg border border-border p-4"
+            >
+              <div className="flex items-start justify-between gap-4">
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <div className="text-sm font-medium text-foreground">{msg.name}</div>
+                    {!msg.read && (
+                      <span className="inline-block h-2 w-2 rounded-full bg-primary" />
+                    )}
+                  </div>
+                  <div className="font-mono text-xs text-muted-foreground">{msg.email}</div>
+                  <p className="mt-2 text-sm text-foreground">{msg.message}</p>
+                  <div className="mt-2 font-mono text-xs text-muted-foreground">
+                    {new Date(msg.created_at).toLocaleDateString()} at{" "}
+                    {new Date(msg.created_at).toLocaleTimeString()}
+                  </div>
+                </div>
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => handleToggleRead(msg.id, msg.read)}
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground"
+                    aria-label={msg.read ? "Mark as unread" : "Mark as read"}
+                    title={msg.read ? "Mark as unread" : "Mark as read"}
+                  >
+                    <Mail className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={() => handleDelete(msg.id)}
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                    aria-label="Delete"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <EmptyState label="No messages yet." />
+      )}
     </section>
   );
 }
