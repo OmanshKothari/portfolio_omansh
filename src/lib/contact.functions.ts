@@ -10,28 +10,37 @@ const contactInput = z.object({
   message: z.string().min(5, "Message must be at least 5 characters").max(5000),
 });
 
+// Spam throttle: one submission per email address per 30-minute window.
+// Email-based (not IP-based) to stay privacy-friendly.
+const CONTACT_MAX_SUBMISSIONS = 1;
+const CONTACT_WINDOW_MS = 30 * 60 * 1000;
+
 /**
  * Public: submit a contact form message.
- * Stores the message in the database for admin review.
+ * Throttled per email, then stored in the database for admin review.
  */
 export const submitContactForm = createServerFn({ method: "POST" })
   .inputValidator(contactInput)
   .handler(async ({ data }) => {
     const { getDb, nowIso } = await import("./db.server");
+    const { checkRateLimit } = await import("./rate-limit.server");
     const { randomUUID } = await import("node:crypto");
 
-    const db = getDb();
-    const id = randomUUID();
-    const now = nowIso();
+    const key = `contact:${data.email.trim().toLowerCase()}`;
+    const limit = checkRateLimit(key, CONTACT_MAX_SUBMISSIONS, CONTACT_WINDOW_MS);
+    if (!limit.allowed) {
+      const minutes = Math.ceil(limit.retryAfterMs / 60_000);
+      throw new Error(`You've already sent a message recently. Please try again in ${minutes} minute(s).`);
+    }
 
+    const db = getDb();
     try {
       await db.execute({
         sql: `INSERT INTO contact_messages (id, name, email, message, read, created_at)
               VALUES (?, ?, ?, ?, ?, ?)`,
-        args: [id, data.name, data.email, data.message, 0, now],
+        args: [randomUUID(), data.name, data.email, data.message, 0, nowIso()],
       });
-
-      return { success: true, id };
+      return { success: true };
     } catch (error) {
       console.error("Error submitting contact form:", error);
       throw new Error("Failed to submit contact form. Please try again.");

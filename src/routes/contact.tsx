@@ -25,7 +25,7 @@ function ContactPage() {
   const hasLinkedin = settings.linkedin_url && settings.linkedin_url.startsWith("http");
 
   const submitMutation = useMutation({
-    mutationFn: submitContactForm,
+    mutationFn: (input: typeof formData) => submitContactForm({ data: input }),
     onSuccess: () => {
       setFormData({ name: "", email: "", message: "" });
       setError(null);
@@ -38,7 +38,11 @@ function ContactPage() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(null);
-    await submitMutation.mutateAsync(formData);
+    try {
+      await submitMutation.mutateAsync(formData);
+    } catch {
+      // Error surfaced via onError → `error` state; nothing else to do here.
+    }
   };
 
   const isLoading = submitMutation.isPending;

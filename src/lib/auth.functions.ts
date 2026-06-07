@@ -12,14 +12,30 @@ export const requireAdmin = createMiddleware({ type: "function" }).server(async 
   return next({ context: { admin: true } });
 });
 
+// Brute-force protection: max 5 failed attempts per email per 15-minute window.
+const LOGIN_MAX_ATTEMPTS = 5;
+const LOGIN_WINDOW_MS = 15 * 60 * 1000;
+
 /** Sign in the single admin. Succeeds only for the configured ADMIN_EMAIL + password. */
 export const login = createServerFn({ method: "POST" })
   .inputValidator(z.object({ email: z.string().email(), password: z.string().min(1) }))
   .handler(async ({ data }) => {
     const { credentialsMatchAdmin, startSession } = await import("./auth.server");
+    const { checkRateLimit, resetRateLimit } = await import("./rate-limit.server");
+
+    const key = `login:${data.email.trim().toLowerCase()}`;
+    const limit = checkRateLimit(key, LOGIN_MAX_ATTEMPTS, LOGIN_WINDOW_MS);
+    if (!limit.allowed) {
+      const minutes = Math.ceil(limit.retryAfterMs / 60_000);
+      throw new Error(`Too many attempts. Try again in ${minutes} minute(s).`);
+    }
+
     if (!credentialsMatchAdmin(data.email, data.password)) {
       throw new Error("Invalid email or password.");
     }
+
+    // Successful login clears the throttle so the admin isn't penalised next time.
+    resetRateLimit(key);
     startSession();
     return { ok: true as const };
   });

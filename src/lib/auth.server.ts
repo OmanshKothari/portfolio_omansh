@@ -69,9 +69,9 @@ export function isAuthenticated(): boolean {
 
 export function startSession(): void {
   setCookie(COOKIE_NAME, createToken(), {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
+    httpOnly: true, // not readable from JS → mitigates token theft via XSS
+    secure: process.env.NODE_ENV === "production", // HTTPS-only in production
+    sameSite: "strict", // not sent on cross-site requests → CSRF defence
     path: "/",
     maxAge: SESSION_MAX_AGE_S,
   });

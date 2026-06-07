@@ -484,27 +484,25 @@ function MessagesAdmin() {
     queryFn: () => listContactMessages(),
   });
 
+  const invalidate = () => qc.invalidateQueries({ queryKey: ["admin-messages"] });
+
   const deleteMutation = useMutation({
-    mutationFn: deleteContactMessage,
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["admin-messages"] });
-    },
+    mutationFn: (id: string) => deleteContactMessage({ data: { id } }),
+    onSuccess: invalidate,
   });
 
   const readMutation = useMutation({
-    mutationFn: markContactMessageRead,
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["admin-messages"] });
-    },
+    mutationFn: (vars: { id: string; read: boolean }) => markContactMessageRead({ data: vars }),
+    onSuccess: invalidate,
   });
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = (id: string) => {
     if (!confirm("Delete this message?")) return;
-    await deleteMutation.mutateAsync({ id });
+    deleteMutation.mutate(id);
   };
 
-  const handleToggleRead = async (id: string, currentRead: boolean) => {
-    await readMutation.mutateAsync({ id, read: !currentRead });
+  const handleToggleRead = (id: string, currentRead: boolean) => {
+    readMutation.mutate({ id, read: !currentRead });
   };
 
   return (
