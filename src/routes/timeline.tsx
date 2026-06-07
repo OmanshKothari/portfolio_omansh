@@ -50,14 +50,14 @@ function TimelinePage() {
 /** A single timeline entry: dates | rail+dot | company/role/bullets. */
 function TimelineRow({ item }: { item: TimelineItemType }) {
   return (
-    <li className="grid grid-cols-[10rem_1.25rem_1fr] gap-x-4">
-      {/* Dates column — kept on one line via whitespace-nowrap */}
-      <div className="whitespace-nowrap pt-1 text-right font-mono text-xs leading-snug text-muted-foreground">
+    <li className="grid gap-1.5 md:grid-cols-[10rem_1.25rem_1fr] md:gap-x-4 md:gap-y-0">
+      {/* Dates — above the content on mobile, right-aligned rail column on md+ */}
+      <div className="font-mono text-xs leading-snug text-muted-foreground md:whitespace-nowrap md:pt-1 md:text-right">
         {item.dates}
       </div>
 
-      {/* Vertical rail with a node dot */}
-      <div className="relative flex justify-center">
+      {/* Vertical rail with a node dot — hidden on mobile (no room for it) */}
+      <div className="relative hidden justify-center md:flex">
         <div className="absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-border" aria-hidden />
         <div className="relative mt-2 h-2.5 w-2.5 rounded-full border border-border bg-background" />
       </div>

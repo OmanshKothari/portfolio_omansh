@@ -1,21 +1,34 @@
 import type { ReactNode } from "react";
-import { Sidebar } from "./Sidebar";
+import { Sidebar, MobileNav } from "./Sidebar";
 
 export function Shell({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen bg-background">
       <Sidebar />
-      <main className="md:pl-64">
+      <MobileNav />
+      <main className="pt-16 md:pl-64 md:pt-0">
         <div className="mx-auto max-w-4xl px-6 py-12 md:px-12 md:py-16">{children}</div>
       </main>
     </div>
   );
 }
 
-export function PageHeader({ eyebrow, title, description }: { eyebrow?: string; title: string; description?: string }) {
+export function PageHeader({
+  eyebrow,
+  title,
+  description,
+}: {
+  eyebrow?: string;
+  title: string;
+  description?: string;
+}) {
   return (
     <header className="mb-12">
-      {eyebrow && <div className="mb-2 font-mono text-xs uppercase tracking-wider text-muted-foreground">{eyebrow}</div>}
+      {eyebrow && (
+        <div className="mb-2 font-mono text-xs uppercase tracking-wider text-muted-foreground">
+          {eyebrow}
+        </div>
+      )}
       <h1 className="text-3xl font-semibold tracking-tight text-foreground">{title}</h1>
       {description && <p className="mt-3 max-w-2xl text-muted-foreground">{description}</p>}
     </header>
