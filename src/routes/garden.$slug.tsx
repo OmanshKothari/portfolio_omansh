@@ -2,6 +2,7 @@ import { createFileRoute, Link, useParams } from "@tanstack/react-router";
 import { Shell } from "@/components/portfolio/Shell";
 import { useQuery } from "@tanstack/react-query";
 import { getPostBySlug } from "@/lib/blog.functions";
+import { GardenDetailSkeleton } from "@/components/skeletons/GardenSkeletons";
 
 export const Route = createFileRoute("/garden/$slug")({
   head: () => ({ meta: [{ title: "Garden entry" }] }),
@@ -18,7 +19,7 @@ function GardenDetail() {
   if (isLoading) {
     return (
       <Shell>
-        <p className="text-muted-foreground">Loading…</p>
+        <GardenDetailSkeleton />
       </Shell>
     );
   }

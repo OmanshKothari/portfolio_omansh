@@ -51,3 +51,24 @@ export function TimelineSkeletonList({ count = 3 }: { count?: number }) {
     </ul>
   );
 }
+
+/**
+ * Compact card skeleton for the dashboard "Career Highlights" section
+ * (bordered cards: dates, company · role, a couple of bullets).
+ */
+export function HighlightsSkeleton({ count = 3 }: { count?: number }) {
+  return (
+    <ul className="space-y-4">
+      {Array.from({ length: count }).map((_, i) => (
+        <li key={i} className="rounded-xl border border-border p-5">
+          <Skeleton className="h-3 w-24" />
+          <Skeleton className="mt-2 h-4 w-1/2" />
+          <div className="mt-3 space-y-1.5">
+            <Skeleton className="h-3 w-full" />
+            <Skeleton className="h-3 w-4/5" />
+          </div>
+        </li>
+      ))}
+    </ul>
+  );
+}

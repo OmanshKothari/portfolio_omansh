@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { slugify, type BlogPost } from "@/lib/portfolio-types";
 import { getPostById, upsertPost } from "@/lib/blog.functions";
 import { RichEditor } from "@/components/portfolio/RichEditor";
+import { EditFormSkeleton } from "@/components/skeletons/FormSkeletons";
 
 export const Route = createFileRoute("/_authenticated/admin/garden/$id")({
   head: () => ({ meta: [{ title: "Edit entry" }, { name: "robots", content: "noindex" }] }),
@@ -26,7 +27,7 @@ function EditGardenPage() {
   if (loading) {
     return (
       <Shell>
-        <p className="text-muted-foreground">Loading…</p>
+        <EditFormSkeleton />
       </Shell>
     );
   }
@@ -46,13 +47,7 @@ function EditGardenPage() {
   );
 }
 
-export function BlogForm({
-  initial,
-  onDone,
-}: {
-  initial: BlogPost | null;
-  onDone: () => void;
-}) {
+export function BlogForm({ initial, onDone }: { initial: BlogPost | null; onDone: () => void }) {
   const [title, setTitle] = useState(initial?.title ?? "");
   const [slug, setSlug] = useState(initial?.slug ?? "");
   const [topic, setTopic] = useState(initial?.topic ?? "");

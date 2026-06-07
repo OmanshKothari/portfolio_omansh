@@ -43,6 +43,12 @@ export type SkillGroup = {
   items: string[];
 };
 
+/** A single hero stat, e.g. { value: "3+", label: "Years Experience" }. */
+export type Stat = {
+  value: string;
+  label: string;
+};
+
 export type SiteSettings = {
   name: string;
   role: string;
@@ -53,6 +59,8 @@ export type SiteSettings = {
   linkedin_url: string;
   github_url: string;
   skills: SkillGroup[];
+  /** Headline numbers shown in the home-page hero. */
+  stats: Stat[];
 };
 
 export type ContactMessage = {

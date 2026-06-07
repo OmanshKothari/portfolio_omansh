@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { slugify, type Project } from "@/lib/portfolio-types";
 import { getProjectById, upsertProject } from "@/lib/projects.functions";
 import { RichEditor } from "@/components/portfolio/RichEditor";
+import { EditFormSkeleton } from "@/components/skeletons/FormSkeletons";
 import { X } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin/projects/$id")({
@@ -27,7 +28,7 @@ function EditProjectPage() {
   if (loading) {
     return (
       <Shell>
-        <p className="text-muted-foreground">Loading…</p>
+        <EditFormSkeleton />
       </Shell>
     );
   }

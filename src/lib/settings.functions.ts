@@ -12,6 +12,11 @@ export const DEFAULT_SETTINGS: SiteSettings = {
   linkedin_url: "",
   github_url: "",
   skills: [],
+  stats: [
+    { value: "3+", label: "Years Experience" },
+    { value: "Full Stack", label: "React + Spring Boot" },
+    { value: "SaaS", label: "Multi-tenant Platforms" },
+  ],
 };
 
 const settingsInput = z.object({
@@ -23,6 +28,7 @@ const settingsInput = z.object({
   linkedin_url: z.string(),
   github_url: z.string(),
   skills: z.array(z.object({ category: z.string(), items: z.array(z.string()) })).default([]),
+  stats: z.array(z.object({ value: z.string(), label: z.string() })).default([]),
 });
 
 /** Public: the editable site identity / profile. Falls back to defaults if unseeded. */
@@ -41,13 +47,13 @@ export const updateSiteSettings = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { getDb } = await import("./db.server");
     await getDb().execute({
-      sql: `INSERT INTO site_settings (id, name, role, tagline, about, contact_email, linkedin_url, github_url, skills)
-            VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?)
+      sql: `INSERT INTO site_settings (id, name, role, tagline, about, contact_email, linkedin_url, github_url, skills, stats)
+            VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT(id) DO UPDATE SET
               name=excluded.name, role=excluded.role, tagline=excluded.tagline,
               about=excluded.about, contact_email=excluded.contact_email,
               linkedin_url=excluded.linkedin_url, github_url=excluded.github_url,
-              skills=excluded.skills`,
+              skills=excluded.skills, stats=excluded.stats`,
       args: [
         data.name,
         data.role,
@@ -57,6 +63,7 @@ export const updateSiteSettings = createServerFn({ method: "POST" })
         data.linkedin_url,
         data.github_url,
         JSON.stringify(data.skills ?? []),
+        JSON.stringify(data.stats ?? []),
       ],
     });
     return { ok: true as const };

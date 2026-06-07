@@ -9,6 +9,7 @@ import type {
   SiteSettings,
   ContactMessage,
   SkillGroup,
+  Stat,
 } from "./portfolio-types";
 
 function createDbClient(): Client {
@@ -50,6 +51,20 @@ const parseSkills = (v: unknown): SkillGroup[] => {
         category: str(g.category),
         items: Array.isArray(g.items) ? g.items.map(String) : [],
       }));
+  } catch {
+    return [];
+  }
+};
+
+/** Parse a JSON column into validated Stat[]; drops malformed entries. */
+const parseStats = (v: unknown): Stat[] => {
+  if (v == null) return [];
+  try {
+    const parsed = JSON.parse(String(v));
+    if (!Array.isArray(parsed)) return [];
+    return parsed
+      .filter((s): s is { value: unknown; label: unknown } => s && typeof s === "object")
+      .map((s) => ({ value: str(s.value), label: str(s.label) }));
   } catch {
     return [];
   }
@@ -110,6 +125,7 @@ export function rowToSiteSettings(r: Row): SiteSettings {
     linkedin_url: str(r.linkedin_url),
     github_url: str(r.github_url),
     skills: parseSkills(r.skills),
+    stats: parseStats(r.stats),
   };
 }
 

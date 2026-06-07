@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus, Trash2 } from "lucide-react";
 import { getSiteSettings, updateSiteSettings, DEFAULT_SETTINGS } from "@/lib/settings.functions";
 import { RichEditor } from "@/components/portfolio/RichEditor";
-import type { SkillGroup } from "@/lib/portfolio-types";
+import type { SkillGroup, Stat } from "@/lib/portfolio-types";
 import { FormRow } from "./primitives";
 
 type ProfileForm = typeof DEFAULT_SETTINGS;
@@ -18,6 +18,13 @@ function cleanSkills(skills: SkillGroup[]): SkillGroup[] {
       items: g.items.map((s) => s.trim()).filter(Boolean),
     }))
     .filter((g) => g.category || g.items.length > 0);
+}
+
+/** Normalize hero stats before saving: trim, drop rows missing a value or label. */
+function cleanStats(stats: Stat[]): Stat[] {
+  return stats
+    .map((s) => ({ value: s.value.trim(), label: s.label.trim() }))
+    .filter((s) => s.value || s.label);
 }
 
 /** Admin tab: edit the single-row site profile shown across the public site. */
@@ -48,7 +55,9 @@ export function ProfileTab() {
     setErr(null);
     setSaved(false);
     try {
-      await updateSiteSettings({ data: { ...form, skills: cleanSkills(form.skills) } });
+      await updateSiteSettings({
+        data: { ...form, skills: cleanSkills(form.skills), stats: cleanStats(form.stats) },
+      });
       qc.invalidateQueries({ queryKey: ["site-settings"] });
       setSaved(true);
     } catch (e2) {
@@ -81,6 +90,11 @@ export function ProfileTab() {
             className={INPUT_CLASS}
           />
         </FormRow>
+
+        <FormRow label="Stats (shown in hero)">
+          <StatsEditor value={form.stats} onChange={(stats) => setForm((f) => ({ ...f, stats }))} />
+        </FormRow>
+
         <FormRow label="About (rich text)">
           <RichEditor
             value={form.about}
@@ -177,6 +191,53 @@ function SkillsEditor({
         className="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs font-medium text-foreground hover:bg-accent"
       >
         <Plus className="h-3.5 w-3.5" /> Add category
+      </button>
+    </div>
+  );
+}
+
+/**
+ * Editor for hero stats: a list of {value, label} rows.
+ * `value` is the bold headline (e.g. "3+"), `label` the caption (e.g. "Years Experience").
+ */
+function StatsEditor({ value, onChange }: { value: Stat[]; onChange: (stats: Stat[]) => void }) {
+  const updateStat = (index: number, patch: Partial<Stat>) =>
+    onChange(value.map((s, i) => (i === index ? { ...s, ...patch } : s)));
+  const addStat = () => onChange([...value, { value: "", label: "" }]);
+  const removeStat = (index: number) => onChange(value.filter((_, i) => i !== index));
+
+  return (
+    <div className="space-y-2">
+      {value.map((stat, i) => (
+        <div key={i} className="flex items-center gap-2">
+          <input
+            value={stat.value}
+            onChange={(e) => updateStat(i, { value: e.target.value })}
+            placeholder="Value (e.g. 3+)"
+            className={INPUT_CLASS + " sm:max-w-40"}
+          />
+          <input
+            value={stat.label}
+            onChange={(e) => updateStat(i, { label: e.target.value })}
+            placeholder="Label (e.g. Years Experience)"
+            className={INPUT_CLASS}
+          />
+          <button
+            type="button"
+            onClick={() => removeStat(i)}
+            aria-label="Remove stat"
+            className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+          >
+            <Trash2 className="h-4 w-4" />
+          </button>
+        </div>
+      ))}
+      <button
+        type="button"
+        onClick={addStat}
+        className="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs font-medium text-foreground hover:bg-accent"
+      >
+        <Plus className="h-3.5 w-3.5" /> Add stat
       </button>
     </div>
   );

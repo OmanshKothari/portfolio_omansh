@@ -54,7 +54,8 @@ CREATE TABLE IF NOT EXISTS site_settings (
   contact_email TEXT NOT NULL DEFAULT '',
   linkedin_url  TEXT NOT NULL DEFAULT '',
   github_url    TEXT NOT NULL DEFAULT '',
-  skills        TEXT NOT NULL DEFAULT '[]'         -- JSON array of {category, items[]}
+  skills        TEXT NOT NULL DEFAULT '[]',        -- JSON array of {category, items[]}
+  stats         TEXT NOT NULL DEFAULT '[]'         -- JSON array of {value, label} shown in hero
 );
 
 -- Contact form submissions from visitors.

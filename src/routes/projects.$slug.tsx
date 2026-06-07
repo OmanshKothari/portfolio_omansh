@@ -2,6 +2,7 @@ import { createFileRoute, Link, useParams } from "@tanstack/react-router";
 import { Shell, Tag } from "@/components/portfolio/Shell";
 import { useQuery } from "@tanstack/react-query";
 import { getProjectBySlug } from "@/lib/projects.functions";
+import { ProjectDetailSkeleton } from "@/components/skeletons/ProjectSkeletons";
 
 export const Route = createFileRoute("/projects/$slug")({
   head: () => ({
@@ -20,7 +21,7 @@ function ProjectDetail() {
   if (isLoading) {
     return (
       <Shell>
-        <p className="text-muted-foreground">Loading…</p>
+        <ProjectDetailSkeleton />
       </Shell>
     );
   }

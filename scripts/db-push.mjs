@@ -22,18 +22,39 @@ console.log(`Schema applied to ${url}`);
 // `CREATE TABLE IF NOT EXISTS` never alters an existing table, so columns added
 // to a table after its first deploy must be applied with ALTER TABLE. We only
 // add columns that are actually missing, so this is safe to re-run every deploy.
+// Returns the set of column names added (so callers can run one-time backfills).
 async function ensureColumns(table, columns) {
   const info = await db.execute(`PRAGMA table_info(${table})`);
   const existing = new Set(info.rows.map((r) => r.name));
+  const added = new Set();
   for (const { name, def } of columns) {
     if (existing.has(name)) continue;
     await db.execute(`ALTER TABLE ${table} ADD COLUMN ${name} ${def}`);
     console.log(`  + ${table}.${name}`);
+    added.add(name);
   }
+  return added;
 }
 
-await ensureColumns("site_settings", [
+const addedSettingsCols = await ensureColumns("site_settings", [
   { name: "about", def: "TEXT NOT NULL DEFAULT ''" },
   { name: "skills", def: "TEXT NOT NULL DEFAULT '[]'" },
+  { name: "stats", def: "TEXT NOT NULL DEFAULT '[]'" },
 ]);
+
+// One-time backfill: when `stats` is first introduced, keep the previously
+// hard-coded hero stats on the existing profile row so the live site is
+// unchanged until the admin edits them. Runs only at column creation.
+if (addedSettingsCols.has("stats")) {
+  const defaultStats = JSON.stringify([
+    { value: "3+", label: "Years Experience" },
+    { value: "Full Stack", label: "React + Spring Boot" },
+    { value: "SaaS", label: "Multi-tenant Platforms" },
+  ]);
+  await db.execute({
+    sql: "UPDATE site_settings SET stats = ? WHERE id = 1 AND (stats IS NULL OR stats = '[]')",
+    args: [defaultStats],
+  });
+  console.log("  ↪ backfilled site_settings.stats");
+}
 console.log("Migrations applied.");

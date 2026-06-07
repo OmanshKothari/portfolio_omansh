@@ -45,6 +45,47 @@ export function ProjectSkeletonGrid({ count = 4 }: { count?: number }) {
 }
 
 /**
+ * Skeleton placeholder for the project detail page.
+ * Matches the layout of projects.$slug.tsx (back link, title, description,
+ * tags, cover image, long-form body).
+ */
+export function ProjectDetailSkeleton() {
+  return (
+    <div>
+      {/* Back link */}
+      <Skeleton className="h-3 w-20" />
+
+      <div className="mt-6">
+        {/* Title */}
+        <Skeleton className="h-9 w-2/3" />
+
+        {/* Description */}
+        <Skeleton className="mt-4 h-4 w-full" />
+        <Skeleton className="mt-2 h-4 w-4/5" />
+
+        {/* Tags */}
+        <div className="mt-5 flex flex-wrap gap-1.5">
+          <Skeleton className="h-5 w-14 rounded-full" />
+          <Skeleton className="h-5 w-16 rounded-full" />
+          <Skeleton className="h-5 w-12 rounded-full" />
+        </div>
+
+        {/* Cover image */}
+        <Skeleton className="mt-8 h-64 w-full rounded-lg" />
+
+        {/* Long-form body */}
+        <div className="mt-8 space-y-2.5">
+          <Skeleton className="h-3 w-full" />
+          <Skeleton className="h-3 w-full" />
+          <Skeleton className="h-3 w-11/12" />
+          <Skeleton className="h-3 w-3/4" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/**
  * Compact stacked skeleton for the dashboard "Featured Projects" list
  * (small `p-4` cards, no cover image).
  */
