@@ -51,5 +51,5 @@ export const logout = createServerFn({ method: "POST" }).handler(async () => {
 export const me = createServerFn({ method: "GET" }).handler(async () => {
   const { isAuthenticated } = await import("./auth.server");
   const isAdmin = isAuthenticated();
-  return { isAdmin, email: isAdmin ? process.env.ADMIN_EMAIL ?? null : null };
+  return { isAdmin, email: isAdmin ? (process.env.ADMIN_EMAIL ?? null) : null };
 });

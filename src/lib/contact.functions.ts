@@ -30,7 +30,9 @@ export const submitContactForm = createServerFn({ method: "POST" })
     const limit = checkRateLimit(key, CONTACT_MAX_SUBMISSIONS, CONTACT_WINDOW_MS);
     if (!limit.allowed) {
       const minutes = Math.ceil(limit.retryAfterMs / 60_000);
-      throw new Error(`You've already sent a message recently. Please try again in ${minutes} minute(s).`);
+      throw new Error(
+        `You've already sent a message recently. Please try again in ${minutes} minute(s).`,
+      );
     }
 
     const db = getDb();
@@ -54,9 +56,7 @@ export const listContactMessages = createServerFn({ method: "GET" })
   .middleware([requireAdmin])
   .handler(async (): Promise<ContactMessage[]> => {
     const { getDb, rowToContactMessage } = await import("./db.server");
-    const res = await getDb().execute(
-      "SELECT * FROM contact_messages ORDER BY created_at DESC"
-    );
+    const res = await getDb().execute("SELECT * FROM contact_messages ORDER BY created_at DESC");
     return res.rows.map(rowToContactMessage);
   });
 
@@ -80,9 +80,9 @@ export const markContactMessageRead = createServerFn({ method: "POST" })
   .inputValidator(z.object({ id: z.string(), read: z.boolean() }))
   .handler(async ({ data }) => {
     const { getDb } = await import("./db.server");
-    await getDb().execute(
-      "UPDATE contact_messages SET read = ? WHERE id = ?",
-      [data.read ? 1 : 0, data.id]
-    );
+    await getDb().execute("UPDATE contact_messages SET read = ? WHERE id = ?", [
+      data.read ? 1 : 0,
+      data.id,
+    ]);
     return { success: true };
   });

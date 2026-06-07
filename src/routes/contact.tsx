@@ -56,15 +56,22 @@ function ContactPage() {
         Looking to connect? Fill out the form below
         {hasLinkedin ? (
           <>
-            {" "}or find me on{" "}
-            <a href={settings.linkedin_url} target="_blank" rel="noreferrer" className="text-primary hover:underline">
+            {" "}
+            or find me on{" "}
+            <a
+              href={settings.linkedin_url}
+              target="_blank"
+              rel="noreferrer"
+              className="text-primary hover:underline"
+            >
               LinkedIn
             </a>
           </>
         ) : null}
         {settings.contact_email ? (
           <>
-            {" "}or email{" "}
+            {" "}
+            or email{" "}
             <a href={`mailto:${settings.contact_email}`} className="text-primary hover:underline">
               {settings.contact_email}
             </a>
@@ -136,7 +143,9 @@ function ContactPage() {
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="block">
-      <span className="mb-1.5 block font-mono text-xs uppercase tracking-wider text-muted-foreground">{label}</span>
+      <span className="mb-1.5 block font-mono text-xs uppercase tracking-wider text-muted-foreground">
+        {label}
+      </span>
       {children}
     </label>
   );

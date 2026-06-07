@@ -55,7 +55,9 @@ function verifyToken(token: string | undefined): boolean {
   const b = Buffer.from(expected);
   if (a.length !== b.length || !timingSafeEqual(a, b)) return false;
   try {
-    const payload = JSON.parse(Buffer.from(payloadB64.replace(/-/g, "+").replace(/_/g, "/"), "base64").toString());
+    const payload = JSON.parse(
+      Buffer.from(payloadB64.replace(/-/g, "+").replace(/_/g, "/"), "base64").toString(),
+    );
     return typeof payload.exp === "number" && payload.exp > Date.now();
   } catch {
     return false;
