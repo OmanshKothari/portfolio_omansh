@@ -1,11 +1,16 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Shell, PageHeader, Tag } from "@/components/portfolio/Shell";
 import { useQuery } from "@tanstack/react-query";
-import { listProjects } from "@/lib/projects.functions";
+import { projectsQuery, siteSettingsQuery } from "@/lib/queries";
 import { ProjectSkeletonGrid } from "@/components/skeletons/ProjectSkeletons";
 import { SITE_NAME } from "@/lib/site-config";
 
 export const Route = createFileRoute("/projects/")({
+  loader: ({ context }) =>
+    Promise.all([
+      context.queryClient.ensureQueryData(projectsQuery()),
+      context.queryClient.ensureQueryData(siteSettingsQuery()),
+    ]),
   head: () => ({
     meta: [
       { title: `Projects — ${SITE_NAME}` },
@@ -16,10 +21,7 @@ export const Route = createFileRoute("/projects/")({
 });
 
 function ProjectsPage() {
-  const { data, isLoading } = useQuery({
-    queryKey: ["projects-all"],
-    queryFn: () => listProjects(),
-  });
+  const { data, isLoading } = useQuery(projectsQuery());
 
   return (
     <Shell>

@@ -1,12 +1,17 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Shell, PageHeader } from "@/components/portfolio/Shell";
 import { useQuery } from "@tanstack/react-query";
-import { listTimeline } from "@/lib/timeline.functions";
+import { timelineQuery, siteSettingsQuery } from "@/lib/queries";
 import type { TimelineItem as TimelineItemType } from "@/lib/portfolio-types";
 import { TimelineSkeletonList } from "@/components/skeletons/TimelineSkeletons";
 import { SITE_NAME } from "@/lib/site-config";
 
 export const Route = createFileRoute("/timeline")({
+  loader: ({ context }) =>
+    Promise.all([
+      context.queryClient.ensureQueryData(timelineQuery()),
+      context.queryClient.ensureQueryData(siteSettingsQuery()),
+    ]),
   head: () => ({
     meta: [
       { title: `Career Timeline — ${SITE_NAME}` },
@@ -17,10 +22,7 @@ export const Route = createFileRoute("/timeline")({
 });
 
 function TimelinePage() {
-  const { data, isLoading } = useQuery({
-    queryKey: ["timeline-all"],
-    queryFn: () => listTimeline(),
-  });
+  const { data, isLoading } = useQuery(timelineQuery());
 
   return (
     <Shell>

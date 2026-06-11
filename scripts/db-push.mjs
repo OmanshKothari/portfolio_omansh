@@ -10,6 +10,14 @@ try {
   /* no .env — rely on ambient env */
 }
 
+// Vercel runs this in buildCommand for every deployment, and preview builds
+// share the production TURSO_DATABASE_URL — so a schema change on an unmerged
+// branch would alter the production DB. Only production builds may migrate.
+if (process.env.VERCEL && process.env.VERCEL_ENV !== "production") {
+  console.log(`Skipping db:push on Vercel "${process.env.VERCEL_ENV}" build.`);
+  process.exit(0);
+}
+
 const url = process.env.TURSO_DATABASE_URL || "file:./local.db";
 const authToken = process.env.TURSO_AUTH_TOKEN || undefined;
 const sql = readFileSync(new URL("../db/schema.sql", import.meta.url), "utf8");

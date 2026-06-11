@@ -1,12 +1,17 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Shell, PageHeader } from "@/components/portfolio/Shell";
 import { useQuery } from "@tanstack/react-query";
-import { listPublishedPosts } from "@/lib/blog.functions";
+import { postsQuery, siteSettingsQuery } from "@/lib/queries";
 import { GardenListSkeleton } from "@/components/skeletons/GardenSkeletons";
 import { SITE_NAME } from "@/lib/site-config";
 import type { BlogPost } from "@/lib/portfolio-types";
 
 export const Route = createFileRoute("/garden/")({
+  loader: ({ context }) =>
+    Promise.all([
+      context.queryClient.ensureQueryData(postsQuery()),
+      context.queryClient.ensureQueryData(siteSettingsQuery()),
+    ]),
   head: () => ({
     meta: [
       { title: `Digital Garden — ${SITE_NAME}` },
@@ -20,10 +25,7 @@ export const Route = createFileRoute("/garden/")({
 });
 
 function GardenPage() {
-  const { data, isLoading } = useQuery({
-    queryKey: ["garden-all"],
-    queryFn: () => listPublishedPosts(),
-  });
+  const { data, isLoading } = useQuery(postsQuery());
 
   const groups = (data ?? []).reduce<Record<string, BlogPost[]>>((acc, e) => {
     (acc[e.topic] ||= []).push(e);

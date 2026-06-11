@@ -55,8 +55,25 @@ function sign(payloadB64: string): string {
   return b64url(createHmac("sha256", secret).update(payloadB64).digest());
 }
 
+/**
+ * Short fingerprint of the current password hash, embedded in every token.
+ * Sessions are stateless and can't be revoked individually, but rotating
+ * ADMIN_PASSWORD_HASH changes this fingerprint and instantly invalidates
+ * every outstanding token — a kill switch that needs no server state.
+ */
+function passwordFingerprint(): string {
+  return createHmac("sha256", requireEnv("SESSION_SECRET"))
+    .update(process.env.ADMIN_PASSWORD_HASH ?? "")
+    .digest("hex")
+    .slice(0, 16);
+}
+
 function createToken(): string {
-  const payload = { exp: Date.now() + SESSION_MAX_AGE_S * 1000, n: randomBytes(8).toString("hex") };
+  const payload = {
+    exp: Date.now() + SESSION_MAX_AGE_S * 1000,
+    n: randomBytes(8).toString("hex"),
+    v: passwordFingerprint(),
+  };
   const payloadB64 = b64url(Buffer.from(JSON.stringify(payload)));
   return `${payloadB64}.${sign(payloadB64)}`;
 }
@@ -72,7 +89,11 @@ function verifyToken(token: string | undefined): boolean {
     const payload = JSON.parse(
       Buffer.from(payloadB64.replace(/-/g, "+").replace(/_/g, "/"), "base64").toString(),
     );
-    return typeof payload.exp === "number" && payload.exp > Date.now();
+    return (
+      typeof payload.exp === "number" &&
+      payload.exp > Date.now() &&
+      payload.v === passwordFingerprint()
+    );
   } catch {
     return false;
   }

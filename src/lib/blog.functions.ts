@@ -65,16 +65,18 @@ export const upsertPost = createServerFn({ method: "POST" })
   .inputValidator(blogInput)
   .handler(async ({ data }) => {
     const { getDb, nowIso } = await import("./db.server");
+    const { sanitizeRichHtml } = await import("./sanitize.server");
     const { randomUUID } = await import("node:crypto");
     const db = getDb();
     const now = nowIso();
     const published = data.published ? 1 : 0;
+    const contentHtml = sanitizeRichHtml(data.content_html);
     if (data.id) {
       await db.execute({
         sql: `UPDATE blog_posts SET slug=?, title=?, excerpt=?, content_html=?, topic=?,
                 published=?, published_at=COALESCE(?, published_at), updated_at=? WHERE id=?`,
         args: [
-          data.slug, data.title, data.excerpt, data.content_html, data.topic,
+          data.slug, data.title, data.excerpt, contentHtml, data.topic,
           published, data.published_at ?? null, now, data.id,
         ],
       });
@@ -85,7 +87,7 @@ export const upsertPost = createServerFn({ method: "POST" })
       sql: `INSERT INTO blog_posts (id, slug, title, excerpt, content_html, topic, published, published_at, created_at, updated_at)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       args: [
-        id, data.slug, data.title, data.excerpt, data.content_html, data.topic,
+        id, data.slug, data.title, data.excerpt, contentHtml, data.topic,
         published, data.published_at ?? now, now, now,
       ],
     });

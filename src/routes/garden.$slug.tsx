@@ -1,20 +1,36 @@
 import { createFileRoute, Link, useParams } from "@tanstack/react-router";
 import { Shell } from "@/components/portfolio/Shell";
 import { useQuery } from "@tanstack/react-query";
-import { getPostBySlug } from "@/lib/blog.functions";
+import { postQuery, siteSettingsQuery } from "@/lib/queries";
 import { GardenDetailSkeleton } from "@/components/skeletons/GardenSkeletons";
+import { SITE_NAME } from "@/lib/site-config";
 
 export const Route = createFileRoute("/garden/$slug")({
-  head: () => ({ meta: [{ title: "Garden entry" }] }),
+  // Resolve on the server so SSR ships the article (not a skeleton) and the
+  // head() below can use the real title for tabs and link unfurls.
+  loader: async ({ params, context }) => {
+    const [post] = await Promise.all([
+      context.queryClient.ensureQueryData(postQuery(params.slug)),
+      context.queryClient.ensureQueryData(siteSettingsQuery()),
+    ]);
+    return post;
+  },
+  head: ({ loaderData }) => ({
+    meta: loaderData
+      ? [
+          { title: `${loaderData.title} — ${SITE_NAME}` },
+          { name: "description", content: loaderData.excerpt },
+          { property: "og:title", content: loaderData.title },
+          { property: "og:description", content: loaderData.excerpt },
+        ]
+      : [{ title: `Garden — ${SITE_NAME}` }],
+  }),
   component: GardenDetail,
 });
 
 function GardenDetail() {
   const { slug } = useParams({ from: "/garden/$slug" });
-  const { data, isLoading } = useQuery({
-    queryKey: ["garden", slug],
-    queryFn: () => getPostBySlug({ data: { slug } }),
-  });
+  const { data, isLoading } = useQuery(postQuery(slug));
 
   if (isLoading) {
     return (

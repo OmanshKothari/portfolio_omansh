@@ -1,22 +1,36 @@
 import { createFileRoute, Link, useParams } from "@tanstack/react-router";
 import { Shell, Tag } from "@/components/portfolio/Shell";
 import { useQuery } from "@tanstack/react-query";
-import { getProjectBySlug } from "@/lib/projects.functions";
+import { projectQuery, siteSettingsQuery } from "@/lib/queries";
 import { ProjectDetailSkeleton } from "@/components/skeletons/ProjectSkeletons";
+import { SITE_NAME } from "@/lib/site-config";
 
 export const Route = createFileRoute("/projects/$slug")({
-  head: () => ({
-    meta: [{ title: "Project" }],
+  // Resolve on the server so SSR ships the article (not a skeleton) and the
+  // head() below can use the real title for tabs and link unfurls.
+  loader: async ({ params, context }) => {
+    const [project] = await Promise.all([
+      context.queryClient.ensureQueryData(projectQuery(params.slug)),
+      context.queryClient.ensureQueryData(siteSettingsQuery()),
+    ]);
+    return project;
+  },
+  head: ({ loaderData }) => ({
+    meta: loaderData
+      ? [
+          { title: `${loaderData.title} — ${SITE_NAME}` },
+          { name: "description", content: loaderData.description },
+          { property: "og:title", content: loaderData.title },
+          { property: "og:description", content: loaderData.description },
+        ]
+      : [{ title: `Project — ${SITE_NAME}` }],
   }),
   component: ProjectDetail,
 });
 
 function ProjectDetail() {
   const { slug } = useParams({ from: "/projects/$slug" });
-  const { data, isLoading } = useQuery({
-    queryKey: ["project", slug],
-    queryFn: () => getProjectBySlug({ data: { slug } }),
-  });
+  const { data, isLoading } = useQuery(projectQuery(slug));
 
   if (isLoading) {
     return (

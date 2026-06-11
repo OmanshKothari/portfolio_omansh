@@ -15,8 +15,14 @@ knowingly accepted.
   `SESSION_SECRET`) is stored in a cookie that is `httpOnly`, `Secure` in
   production, and `SameSite=Strict`. Tokens carry a 7-day expiry that is checked
   on every request.
+- **Session revocation.** Tokens embed a fingerprint of the current
+  `ADMIN_PASSWORD_HASH`, so rotating the password (or `SESSION_SECRET`)
+  immediately invalidates every outstanding session — a kill switch that needs
+  no server-side session store.
 - **Login brute-force.** Login is rate limited to 5 attempts per email per
-  15-minute sliding window (`src/lib/rate-limit.server.ts`).
+  15-minute sliding window. Buckets are stored in the database
+  (`rate_limits` table), so the limit holds across serverless instances and
+  cold starts (`src/lib/rate-limit.server.ts`).
 
 ## Authorization
 
@@ -31,9 +37,27 @@ submit) are intentionally open.
   touching the database.
 - **SQL injection.** All queries are parameterized via the libSQL client; no SQL
   is built by string concatenation.
-- **Contact spam.** Contact submissions are rate limited to 1 per email per
-  30-minute window. Submissions render in the admin inbox as plain text (React
-  escapes them), so they are not an XSS vector.
+- **Contact spam.** Contact submissions are rate limited to 3 per IP per
+  30-minute window (keyed on IP, not the attacker-controlled email), filtered
+  through a honeypot field, and capped by a global unread-backlog ceiling.
+  Submissions render in the admin inbox as plain text (React escapes them), so
+  they are not an XSS vector.
+- **Rich-text HTML.** Admin-authored HTML (garden posts, project write-ups, the
+  about bio) is sanitized on write with `sanitize-html` against an allowlist
+  matching what the TipTap editor emits (`src/lib/sanitize.server.ts`). Only the
+  admin can author this content, so this is defence in depth: a compromised
+  session yields defacement, not persistent XSS against visitors.
+- **URL fields.** Admin-entered URLs (project links, profile links) must be
+  absolute `http(s)` URLs — `javascript:` and other schemes are rejected at
+  validation, since these values render into `href`/`src` attributes.
+
+## HTTP headers
+
+`vercel.json` sets `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`,
+`Referrer-Policy`, `Strict-Transport-Security`, and a Content-Security-Policy.
+The CSP allows `'unsafe-inline'` scripts because TanStack Start hydration and
+the pre-paint theme script are inline; everything else is locked to `'self'`
+(plus Google Fonts for styles/fonts and `https:` for images).
 
 ## Secrets
 
@@ -44,18 +68,15 @@ server handlers so `node:crypto` and secrets stay out of the client bundle.
 
 ## Accepted risks
 
-- **Blog HTML rendering.** Digital-garden posts are stored as HTML and rendered
-  with `dangerouslySetInnerHTML` (`src/routes/garden.$slug.tsx`). Because the
-  **only** author of that HTML is the authenticated admin, this is self-XSS, not
-  a third-party injection vector — sanitizing the admin's own input would
-  protect no one. If multi-author or untrusted content is ever added, sanitize
-  the HTML (e.g. with `sanitize-html`) before storage and render.
-- **In-process rate limiting.** Rate-limit state lives in memory per server
-  instance and resets on restart. This is sufficient for a personal site on a
-  single instance; a horizontally-scaled deployment would need a shared store
-  (e.g. Redis).
+- **Sanitize-on-write, not on read.** Rich-text HTML is sanitized when stored,
+  so HTML already in the database is trusted at render time. Rows written
+  before sanitization was introduced (or edited outside the app) are rendered
+  as-is; all of that content is admin-authored.
 - **Encryption at rest.** Contact messages are stored unencrypted in the
   database; confidentiality relies on Turso's storage and HTTPS in transit.
+- **Stateless tokens within a password epoch.** Between password rotations a
+  stolen token cannot be individually revoked before its 7-day expiry; revoking
+  requires rotating the password or `SESSION_SECRET`.
 
 ## Reporting
 

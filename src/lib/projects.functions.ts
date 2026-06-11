@@ -3,6 +3,14 @@ import { z } from "zod";
 import { requireAdmin } from "./auth.functions";
 import type { Project } from "./portfolio-types";
 
+// URLs render straight into href/src on the public pages, so only absolute
+// http(s) URLs are accepted — a stored javascript: URL would be an XSS sink.
+// Empty submissions normalise to null.
+const httpUrl = z.preprocess(
+  (v) => (typeof v === "string" && v.trim() === "" ? null : v),
+  z.string().url().startsWith("http").nullable().optional(),
+);
+
 const projectInput = z.object({
   id: z.string().optional(),
   title: z.string().min(1),
@@ -10,9 +18,9 @@ const projectInput = z.object({
   description: z.string().min(1),
   long_description: z.string().nullable().optional(),
   tags: z.array(z.string()).default([]),
-  github_url: z.string().nullable().optional(),
-  demo_url: z.string().nullable().optional(),
-  cover_url: z.string().nullable().optional(),
+  github_url: httpUrl,
+  demo_url: httpUrl,
+  cover_url: httpUrl,
   sort_order: z.number().default(0),
 });
 
@@ -56,16 +64,18 @@ export const upsertProject = createServerFn({ method: "POST" })
   .inputValidator(projectInput)
   .handler(async ({ data }) => {
     const { getDb, nowIso } = await import("./db.server");
+    const { sanitizeRichHtml } = await import("./sanitize.server");
     const { randomUUID } = await import("node:crypto");
     const db = getDb();
     const now = nowIso();
     const tags = JSON.stringify(data.tags ?? []);
+    const longDescription = data.long_description ? sanitizeRichHtml(data.long_description) : null;
     if (data.id) {
       await db.execute({
         sql: `UPDATE projects SET title=?, slug=?, description=?, long_description=?, tags=?,
                 github_url=?, demo_url=?, cover_url=?, sort_order=?, updated_at=? WHERE id=?`,
         args: [
-          data.title, data.slug, data.description, data.long_description ?? null, tags,
+          data.title, data.slug, data.description, longDescription, tags,
           data.github_url ?? null, data.demo_url ?? null, data.cover_url ?? null,
           data.sort_order ?? 0, now, data.id,
         ],
@@ -77,7 +87,7 @@ export const upsertProject = createServerFn({ method: "POST" })
       sql: `INSERT INTO projects (id, slug, title, description, long_description, tags, github_url, demo_url, cover_url, sort_order, created_at, updated_at)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       args: [
-        id, data.slug, data.title, data.description, data.long_description ?? null, tags,
+        id, data.slug, data.title, data.description, longDescription, tags,
         data.github_url ?? null, data.demo_url ?? null, data.cover_url ?? null,
         data.sort_order ?? 0, now, now,
       ],

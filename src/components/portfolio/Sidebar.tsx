@@ -1,14 +1,15 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Moon, Sun, LogOut, Settings, Menu, X } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useTheme } from "./theme";
 import { useAuth } from "./auth-context";
 import { Logo } from "./Logo";
-import { getSiteSettings, DEFAULT_SETTINGS } from "@/lib/settings.functions";
+import { DEFAULT_SETTINGS } from "@/lib/settings.functions";
+import { siteSettingsQuery } from "@/lib/queries";
 
 const nav = [
-  { to: "/", label: "Dashboard" },
+  { to: "/", label: "Home" },
   { to: "/projects", label: "Projects" },
   { to: "/garden", label: "Digital Garden" },
   { to: "/timeline", label: "Career Timeline" },
@@ -19,7 +20,7 @@ export function Sidebar() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { theme, toggle } = useTheme();
   const { isAdmin, signOut } = useAuth();
-  const { data } = useQuery({ queryKey: ["site-settings"], queryFn: () => getSiteSettings() });
+  const { data } = useQuery(siteSettingsQuery());
   const settings = data ?? DEFAULT_SETTINGS;
 
   return (
@@ -115,20 +116,46 @@ export function MobileNav() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { theme, toggle } = useTheme();
   const { isAdmin, signOut } = useAuth();
-  const { data } = useQuery({ queryKey: ["site-settings"], queryFn: () => getSiteSettings() });
+  const { data } = useQuery(siteSettingsQuery());
   const settings = data ?? DEFAULT_SETTINGS;
   const [open, setOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const toggleRef = useRef<HTMLButtonElement>(null);
 
   // Close the menu whenever the route changes.
   useEffect(() => {
     setOpen(false);
   }, [pathname]);
 
-  // While open: lock body scroll and allow Escape to close.
+  // While open: lock body scroll, allow Escape to close, and trap Tab inside
+  // the menu (the page behind it is hidden, so focus must not escape into it).
+  // On close, focus returns to the toggle.
   useEffect(() => {
     if (!open) return;
+    const root = rootRef.current;
+    const focusables = () =>
+      root
+        ? Array.from(root.querySelectorAll<HTMLElement>("a[href], button:not([disabled])"))
+        : [];
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setOpen(false);
+      if (e.key === "Escape") {
+        setOpen(false);
+        return;
+      }
+      if (e.key !== "Tab") return;
+      const els = focusables();
+      if (els.length === 0) return;
+      const first = els[0];
+      const last = els[els.length - 1];
+      const active = document.activeElement;
+      const inside = active instanceof HTMLElement && root?.contains(active);
+      if (e.shiftKey && (active === first || !inside)) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && (active === last || !inside)) {
+        e.preventDefault();
+        first.focus();
+      }
     };
     document.addEventListener("keydown", onKey);
     const prevOverflow = document.body.style.overflow;
@@ -136,6 +163,7 @@ export function MobileNav() {
     return () => {
       document.removeEventListener("keydown", onKey);
       document.body.style.overflow = prevOverflow;
+      toggleRef.current?.focus();
     };
   }, [open]);
 
@@ -146,7 +174,7 @@ export function MobileNav() {
       : "text-muted-foreground hover:bg-accent hover:text-foreground");
 
   return (
-    <div className="md:hidden">
+    <div ref={rootRef} className="md:hidden">
       <header
         className={
           "fixed inset-x-0 top-0 z-40 flex items-center justify-between border-b border-sidebar-border bg-sidebar px-5 " +
@@ -158,6 +186,7 @@ export function MobileNav() {
           <span className="text-sm font-medium text-foreground">{settings.name}</span>
         </Link>
         <button
+          ref={toggleRef}
           onClick={() => setOpen((o) => !o)}
           aria-label={open ? "Close menu" : "Open menu"}
           aria-expanded={open}

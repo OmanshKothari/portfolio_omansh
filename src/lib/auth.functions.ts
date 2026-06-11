@@ -24,7 +24,7 @@ export const login = createServerFn({ method: "POST" })
     const { checkRateLimit, resetRateLimit } = await import("./rate-limit.server");
 
     const key = `login:${data.email.trim().toLowerCase()}`;
-    const limit = checkRateLimit(key, LOGIN_MAX_ATTEMPTS, LOGIN_WINDOW_MS);
+    const limit = await checkRateLimit(key, LOGIN_MAX_ATTEMPTS, LOGIN_WINDOW_MS);
     if (!limit.allowed) {
       const minutes = Math.ceil(limit.retryAfterMs / 60_000);
       throw new Error(`Too many attempts. Try again in ${minutes} minute(s).`);
@@ -35,7 +35,7 @@ export const login = createServerFn({ method: "POST" })
     }
 
     // Successful login clears the throttle so the admin isn't penalised next time.
-    resetRateLimit(key);
+    await resetRateLimit(key);
     startSession();
     return { ok: true as const };
   });
@@ -45,6 +45,13 @@ export const checkAuthAccessKey = createServerFn({ method: "GET" })
   .inputValidator(z.object({ key: z.string() }))
   .handler(async ({ data }) => {
     const { accessKeyValid } = await import("./auth.server");
+    const { checkRateLimit, clientIp } = await import("./rate-limit.server");
+
+    // The 48-byte key already makes brute force infeasible; this throttle just
+    // stops bots from hammering the endpoint.
+    const limit = await checkRateLimit(`access-key:${clientIp()}`, 10, 15 * 60 * 1000);
+    if (!limit.allowed) return { valid: false };
+
     return { valid: accessKeyValid(data.key) };
   });
 

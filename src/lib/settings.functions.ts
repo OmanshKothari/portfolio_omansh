@@ -19,14 +19,18 @@ export const DEFAULT_SETTINGS: SiteSettings = {
   ],
 };
 
+// Profile links render into hrefs on the public pages, so they must be empty
+// or an absolute http(s) URL — never javascript: or other schemes.
+const httpUrlOrEmpty = z.union([z.literal(""), z.string().trim().url().startsWith("http")]);
+
 const settingsInput = z.object({
   name: z.string(),
   role: z.string(),
   tagline: z.string(),
   about: z.string(),
-  contact_email: z.string(),
-  linkedin_url: z.string(),
-  github_url: z.string(),
+  contact_email: z.union([z.literal(""), z.string().trim().email()]),
+  linkedin_url: httpUrlOrEmpty,
+  github_url: httpUrlOrEmpty,
   skills: z.array(z.object({ category: z.string(), items: z.array(z.string()) })).default([]),
   stats: z.array(z.object({ value: z.string(), label: z.string() })).default([]),
 });
@@ -46,6 +50,8 @@ export const updateSiteSettings = createServerFn({ method: "POST" })
   .inputValidator(settingsInput)
   .handler(async ({ data }) => {
     const { getDb } = await import("./db.server");
+    const { sanitizeRichHtml } = await import("./sanitize.server");
+    const about = sanitizeRichHtml(data.about);
     await getDb().execute({
       sql: `INSERT INTO site_settings (id, name, role, tagline, about, contact_email, linkedin_url, github_url, skills, stats)
             VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -58,7 +64,7 @@ export const updateSiteSettings = createServerFn({ method: "POST" })
         data.name,
         data.role,
         data.tagline,
-        data.about,
+        about,
         data.contact_email,
         data.linkedin_url,
         data.github_url,

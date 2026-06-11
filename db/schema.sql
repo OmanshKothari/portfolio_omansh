@@ -58,6 +58,14 @@ CREATE TABLE IF NOT EXISTS site_settings (
   stats         TEXT NOT NULL DEFAULT '[]'         -- JSON array of {value, label} shown in hero
 );
 
+-- Sliding-window rate-limit buckets. Stored in the DB (not in-process memory)
+-- so limits hold across serverless instances and cold starts.
+CREATE TABLE IF NOT EXISTS rate_limits (
+  key      TEXT PRIMARY KEY,
+  count    INTEGER NOT NULL DEFAULT 1,
+  first_at INTEGER NOT NULL                         -- window start, epoch ms
+);
+
 -- Contact form submissions from visitors.
 CREATE TABLE IF NOT EXISTS contact_messages (
   id         TEXT PRIMARY KEY,

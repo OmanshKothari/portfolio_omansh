@@ -2,11 +2,13 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Shell, PageHeader } from "@/components/portfolio/Shell";
-import { getSiteSettings, DEFAULT_SETTINGS } from "@/lib/settings.functions";
+import { DEFAULT_SETTINGS } from "@/lib/settings.functions";
+import { siteSettingsQuery } from "@/lib/queries";
 import { submitContactForm } from "@/lib/contact.functions";
 import { SITE_NAME } from "@/lib/site-config";
 
 export const Route = createFileRoute("/contact")({
+  loader: ({ context }) => context.queryClient.ensureQueryData(siteSettingsQuery()),
   head: () => ({
     meta: [
       { title: `Contact — ${SITE_NAME}` },
@@ -17,17 +19,17 @@ export const Route = createFileRoute("/contact")({
 });
 
 function ContactPage() {
-  const [formData, setFormData] = useState({ name: "", email: "", message: "" });
+  const [formData, setFormData] = useState({ name: "", email: "", message: "", website: "" });
   const [error, setError] = useState<string | null>(null);
 
-  const { data } = useQuery({ queryKey: ["site-settings"], queryFn: () => getSiteSettings() });
+  const { data } = useQuery(siteSettingsQuery());
   const settings = data ?? DEFAULT_SETTINGS;
   const hasLinkedin = settings.linkedin_url && settings.linkedin_url.startsWith("http");
 
   const submitMutation = useMutation({
     mutationFn: (input: typeof formData) => submitContactForm({ data: input }),
     onSuccess: () => {
-      setFormData({ name: "", email: "", message: "" });
+      setFormData({ name: "", email: "", message: "", website: "" });
       setError(null);
     },
     onError: (err) => {
@@ -82,7 +84,8 @@ function ContactPage() {
 
       {isSuccess && (
         <div className="mb-6 rounded-md border border-green-200 bg-green-50 p-4 text-sm text-green-800">
-          Thanks for reaching out! I'll get back to you soon.
+          Thanks for reaching out! I'll get back to you soon. Want to send another message?
+          Refresh the page.
         </div>
       )}
 
@@ -93,6 +96,20 @@ function ContactPage() {
       )}
 
       <form onSubmit={handleSubmit} className="max-w-lg space-y-5">
+        {/* Honeypot: invisible to humans, autofilled by bots. The server
+            silently drops submissions where this has a value. */}
+        <div aria-hidden="true" className="sr-only">
+          <label>
+            Website
+            <input
+              type="text"
+              tabIndex={-1}
+              autoComplete="off"
+              value={formData.website}
+              onChange={(e) => setFormData({ ...formData, website: e.target.value })}
+            />
+          </label>
+        </div>
         <Field label="Full Name">
           <input
             type="text"

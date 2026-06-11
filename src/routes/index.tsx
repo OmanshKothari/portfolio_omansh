@@ -2,10 +2,13 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Shell, Tag } from "@/components/portfolio/Shell";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowRight, ArrowUpRight } from "lucide-react";
-import { listProjects } from "@/lib/projects.functions";
-import { listPublishedPosts } from "@/lib/blog.functions";
-import { listTimeline } from "@/lib/timeline.functions";
-import { getSiteSettings, DEFAULT_SETTINGS } from "@/lib/settings.functions";
+import { DEFAULT_SETTINGS } from "@/lib/settings.functions";
+import {
+  siteSettingsQuery,
+  projectsQuery,
+  postsQuery,
+  timelineQuery,
+} from "@/lib/queries";
 import { FeaturedProjectsSkeleton } from "@/components/skeletons/ProjectSkeletons";
 import { GardenListSkeleton } from "@/components/skeletons/GardenSkeletons";
 import { HighlightsSkeleton } from "@/components/skeletons/TimelineSkeletons";
@@ -13,6 +16,15 @@ import type { Project, BlogPost, TimelineItem } from "@/lib/portfolio-types";
 import { SITE_NAME } from "@/lib/site-config";
 
 export const Route = createFileRoute("/")({
+  // Resolve everything on the server so the first HTML response is the real
+  // page (crawlers and link unfurlers see content, not loading skeletons).
+  loader: ({ context }) =>
+    Promise.all([
+      context.queryClient.ensureQueryData(siteSettingsQuery()),
+      context.queryClient.ensureQueryData(timelineQuery()),
+      context.queryClient.ensureQueryData(projectsQuery()),
+      context.queryClient.ensureQueryData(postsQuery()),
+    ]),
   head: () => ({
     meta: [
       { title: `${SITE_NAME} — Portfolio` },
@@ -27,29 +39,19 @@ const CARD =
   "group block rounded-xl border border-border p-5 transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:bg-accent/40 hover:shadow-sm";
 
 function Dashboard() {
-  const settingsQ = useQuery({
-    queryKey: ["site-settings"],
-    queryFn: () => getSiteSettings(),
-  });
+  // These read the same caches the route loader fills on the server; slicing
+  // happens at render so the full lists stay shared with the other pages.
+  const settingsQ = useQuery(siteSettingsQuery());
+  const timelineQ = useQuery(timelineQuery());
+  const projectsQ = useQuery(projectsQuery());
+  const gardenQ = useQuery(postsQuery());
 
   const settings = settingsQ.data ?? DEFAULT_SETTINGS;
+  const timeline = timelineQ.data?.slice(0, 3);
+  const projects = projectsQ.data?.slice(0, 2);
+  const garden = gardenQ.data?.slice(0, 3);
 
-  const timelineQ = useQuery({
-    queryKey: ["timeline-home"],
-    queryFn: async () => (await listTimeline()).slice(0, 3),
-  });
-
-  const projectsQ = useQuery({
-    queryKey: ["projects-featured"],
-    queryFn: async () => (await listProjects()).slice(0, 2),
-  });
-
-  const gardenQ = useQuery({
-    queryKey: ["garden-latest"],
-    queryFn: async () => (await listPublishedPosts()).slice(0, 3),
-  });
-
-  const hasHighlights = timelineQ.isLoading || (timelineQ.data?.length ?? 0) > 0;
+  const hasHighlights = timelineQ.isLoading || (timeline?.length ?? 0) > 0;
 
   return (
     <Shell>
@@ -79,7 +81,7 @@ function Dashboard() {
             </Link>
           }
         >
-          <CareerHighlights data={timelineQ.data} isLoading={timelineQ.isLoading} />
+          <CareerHighlights data={timeline} isLoading={timelineQ.isLoading} />
         </Section>
       )}
 
@@ -95,7 +97,7 @@ function Dashboard() {
           </Link>
         }
       >
-        <FeaturedProjects data={projectsQ.data} isLoading={projectsQ.isLoading} />
+        <FeaturedProjects data={projects} isLoading={projectsQ.isLoading} />
       </Section>
 
       {settings.skills.length > 0 && (
@@ -116,7 +118,7 @@ function Dashboard() {
           </Link>
         }
       >
-        <LatestWriting data={gardenQ.data} isLoading={gardenQ.isLoading} />
+        <LatestWriting data={garden} isLoading={gardenQ.isLoading} />
       </Section>
     </Shell>
   );
