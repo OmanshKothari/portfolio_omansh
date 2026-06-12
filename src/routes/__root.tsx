@@ -106,10 +106,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   errorComponent: ErrorComponent,
 });
 
-// Runs before first paint so dark-mode users don't get a white flash: the
-// ThemeProvider only resolves the stored theme in a useEffect (post-hydration),
-// which is too late for the initial render.
-const THEME_INIT_SCRIPT = `(function(){try{var t=localStorage.getItem("theme");if(t==="dark"||(!t&&matchMedia("(prefers-color-scheme: dark)").matches))document.documentElement.classList.add("dark")}catch(e){}})()`;
+// Runs before first paint so dark-mode users don't get a white flash and the
+// chosen accent palette applies immediately: the ThemeProvider only resolves
+// stored preferences after hydration, which is too late for the initial render.
+const THEME_INIT_SCRIPT = `(function(){try{var d=document.documentElement,t=localStorage.getItem("theme");if(t==="dark"||(!t&&matchMedia("(prefers-color-scheme: dark)").matches))d.classList.add("dark");var a=localStorage.getItem("accent");if(a==="amber"||a==="indigo"||a==="teal")d.dataset.accent=a}catch(e){}})()`;
 
 function RootShell({ children }: { children: ReactNode }) {
   return (

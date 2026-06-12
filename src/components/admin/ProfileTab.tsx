@@ -45,7 +45,16 @@ export function ProfileTab() {
   }, [data]);
 
   const set =
-    (k: "name" | "role" | "tagline" | "contact_email" | "linkedin_url" | "github_url") =>
+    (
+      k:
+        | "name"
+        | "role"
+        | "tagline"
+        | "contact_email"
+        | "linkedin_url"
+        | "github_url"
+        | "resume_url",
+    ) =>
     (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
       setForm((f) => ({ ...f, [k]: e.target.value }));
 
@@ -123,6 +132,14 @@ export function ProfileTab() {
         </FormRow>
         <FormRow label="GitHub URL">
           <input value={form.github_url} onChange={set("github_url")} className={INPUT_CLASS} />
+        </FormRow>
+        <FormRow label="Resume URL (hosted PDF — shown as a button in the hero and footer)">
+          <input
+            value={form.resume_url}
+            onChange={set("resume_url")}
+            placeholder="https://…/omansh-kothari-resume.pdf"
+            className={INPUT_CLASS}
+          />
         </FormRow>
         {err && <p className="text-sm text-destructive">{err}</p>}
         <div className="flex items-center gap-3">

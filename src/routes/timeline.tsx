@@ -21,6 +21,24 @@ export const Route = createFileRoute("/timeline")({
   component: TimelinePage,
 });
 
+type CompanyGroup = { company: string; roles: TimelineItemType[] };
+
+/**
+ * Collapse consecutive entries at the same company into one group so a
+ * promotion track reads as a single tenure with several roles, not three
+ * unrelated jobs. Only adjacent entries merge — a return to a previous
+ * employer stays a separate chapter.
+ */
+function groupByCompany(items: TimelineItemType[]): CompanyGroup[] {
+  const groups: CompanyGroup[] = [];
+  for (const item of items) {
+    const last = groups[groups.length - 1];
+    if (last && last.company === item.company) last.roles.push(item);
+    else groups.push({ company: item.company, roles: [item] });
+  }
+  return groups;
+}
+
 function TimelinePage() {
   const { data, isLoading } = useQuery(timelineQuery());
 
@@ -35,11 +53,11 @@ function TimelinePage() {
       {isLoading ? (
         <TimelineSkeletonList count={3} />
       ) : data && data.length > 0 ? (
-        <ul className="space-y-10">
-          {data.map((item) => (
-            <TimelineRow key={item.id} item={item} />
+        <div className="space-y-14">
+          {groupByCompany(data).map((group, i) => (
+            <CompanySection key={`${group.company}-${i}`} group={group} />
           ))}
-        </ul>
+        </div>
       ) : (
         <div className="rounded-md border border-dashed border-border p-12 text-center text-sm text-muted-foreground">
           No timeline items yet.
@@ -49,36 +67,61 @@ function TimelinePage() {
   );
 }
 
-/** A single timeline entry: dates | rail+dot | company/role/bullets. */
-function TimelineRow({ item }: { item: TimelineItemType }) {
+/** One employer: company header, then a railed list of roles held there. */
+function CompanySection({ group }: { group: CompanyGroup }) {
   return (
-    <li className="grid gap-1.5 md:grid-cols-[10rem_1.25rem_1fr] md:gap-x-4 md:gap-y-0">
-      {/* Dates — above the content on mobile, right-aligned rail column on md+ */}
-      <div className="font-mono text-xs leading-snug text-muted-foreground md:whitespace-nowrap md:pt-1 md:text-right">
-        {item.dates}
-      </div>
-
-      {/* Vertical rail with a node dot — hidden on mobile (no room for it) */}
-      <div className="relative hidden justify-center md:flex">
-        <div className="absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-border" aria-hidden />
-        <div className="relative mt-2 h-2.5 w-2.5 rounded-full border border-border bg-background" />
-      </div>
-
-      {/* Content column */}
-      <div className="min-w-0">
-        <div className="text-sm font-medium text-foreground">{item.company}</div>
-        <div className="font-mono text-xs text-muted-foreground">{item.role}</div>
-        {item.points.length > 0 && (
-          <ul className="mt-3 space-y-1.5 text-sm text-muted-foreground">
-            {item.points.map((point, i) => (
-              <li key={i} className="flex gap-2">
-                <span className="mt-2 h-1 w-1 shrink-0 rounded-full bg-muted-foreground/60" />
-                <span>{point}</span>
-              </li>
-            ))}
-          </ul>
+    <section>
+      <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <h2 className="text-lg font-semibold tracking-tight text-foreground">{group.company}</h2>
+        {group.roles.length > 1 && (
+          <span className="font-mono text-xs text-muted-foreground">
+            {group.roles.length} roles
+          </span>
         )}
       </div>
+
+      <ol className="relative mt-5 space-y-10">
+        {/* Continuous rail connecting the role nodes. */}
+        <span aria-hidden className="absolute inset-y-1 left-1.25 w-px bg-border" />
+        {group.roles.map((role) => (
+          <RoleEntry key={role.id} role={role} />
+        ))}
+      </ol>
+    </section>
+  );
+}
+
+/** A single role on the rail. The current role (dates ending in "Present") gets a filled accent node. */
+function RoleEntry({ role }: { role: TimelineItemType }) {
+  const isCurrent = /present/i.test(role.dates);
+  return (
+    <li className="relative pl-8">
+      <span
+        aria-hidden
+        className={
+          "absolute left-0 top-1 h-2.75 w-2.75 rounded-full border-2 " +
+          (isCurrent ? "border-primary bg-primary" : "border-primary/50 bg-background")
+        }
+      />
+      <div className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
+        <h3 className="text-sm font-medium text-foreground">{role.role}</h3>
+        <span className="font-mono text-xs text-muted-foreground">{role.dates}</span>
+        {isCurrent && (
+          <span className="rounded-full border border-primary/40 bg-primary/10 px-2 py-0.5 font-mono text-[10px] uppercase tracking-wider text-primary">
+            Current
+          </span>
+        )}
+      </div>
+      {role.points.length > 0 && (
+        <ul className="mt-3 space-y-1.5 text-sm text-muted-foreground">
+          {role.points.map((point, i) => (
+            <li key={i} className="flex gap-2">
+              <span className="mt-2 h-1 w-1 shrink-0 rounded-full bg-muted-foreground/60" />
+              <span>{point}</span>
+            </li>
+          ))}
+        </ul>
+      )}
     </li>
   );
 }

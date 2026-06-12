@@ -58,6 +58,8 @@ export type SiteSettings = {
   contact_email: string;
   linkedin_url: string;
   github_url: string;
+  /** Hosted resume PDF URL — swap it any time from the admin profile; empty hides the buttons. */
+  resume_url: string;
   skills: SkillGroup[];
   /** Headline numbers shown in the home-page hero. */
   stats: Stat[];

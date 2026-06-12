@@ -83,14 +83,14 @@ function ContactPage() {
       </p>
 
       {isSuccess && (
-        <div className="mb-6 rounded-md border border-green-200 bg-green-50 p-4 text-sm text-green-800">
+        <div className="mb-6 rounded-md border border-green-600/30 bg-green-600/10 p-4 text-sm text-green-700 dark:text-green-400">
           Thanks for reaching out! I'll get back to you soon. Want to send another message?
           Refresh the page.
         </div>
       )}
 
       {error && (
-        <div className="mb-6 rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+        <div className="mb-6 rounded-md border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">
           {error}
         </div>
       )}

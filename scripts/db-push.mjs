@@ -48,6 +48,7 @@ const addedSettingsCols = await ensureColumns("site_settings", [
   { name: "about", def: "TEXT NOT NULL DEFAULT ''" },
   { name: "skills", def: "TEXT NOT NULL DEFAULT '[]'" },
   { name: "stats", def: "TEXT NOT NULL DEFAULT '[]'" },
+  { name: "resume_url", def: "TEXT NOT NULL DEFAULT ''" },
 ]);
 
 // One-time backfill: when `stats` is first introduced, keep the previously

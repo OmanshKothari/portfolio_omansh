@@ -124,6 +124,7 @@ export function rowToSiteSettings(r: Row): SiteSettings {
     contact_email: str(r.contact_email),
     linkedin_url: str(r.linkedin_url),
     github_url: str(r.github_url),
+    resume_url: str(r.resume_url),
     skills: parseSkills(r.skills),
     stats: parseStats(r.stats),
   };

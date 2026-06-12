@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Shell, Tag } from "@/components/portfolio/Shell";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowRight, ArrowUpRight } from "lucide-react";
+import { ArrowRight, ArrowUpRight, FileText } from "lucide-react";
 import { DEFAULT_SETTINGS } from "@/lib/settings.functions";
 import {
   siteSettingsQuery,
@@ -36,7 +36,7 @@ export const Route = createFileRoute("/")({
 
 /** Shared hover treatment for every clickable card (brittanychiang.com style). */
 const CARD =
-  "group block rounded-xl border border-border p-5 transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:bg-accent/40 hover:shadow-sm";
+  "group block rounded-xl border border-border p-5 transition-all motion-safe:hover:-translate-y-0.5 hover:border-primary/40 hover:bg-accent/40 hover:shadow-sm";
 
 function Dashboard() {
   // These read the same caches the route loader fills on the server; slicing
@@ -159,6 +159,18 @@ function Hero({ settings }: { settings: typeof DEFAULT_SETTINGS }) {
         >
           Contact
         </Link>
+
+        {settings.resume_url.startsWith("http") && (
+          <a
+            href={settings.resume_url}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-2 rounded-md border border-border px-4 py-2 text-sm font-medium transition-colors hover:bg-accent"
+          >
+            <FileText className="h-4 w-4" />
+            Résumé
+          </a>
+        )}
       </div>
 
       {settings.stats.length > 0 && (

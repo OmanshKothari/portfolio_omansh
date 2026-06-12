@@ -2,7 +2,7 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { Moon, Sun, LogOut, Settings, Menu, X } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { useTheme } from "./theme";
+import { useTheme, ACCENTS } from "./theme";
 import { useAuth } from "./auth-context";
 import { Logo } from "./Logo";
 import { DEFAULT_SETTINGS } from "@/lib/settings.functions";
@@ -15,6 +15,33 @@ const nav = [
   { to: "/timeline", label: "Career Timeline" },
   { to: "/contact", label: "Contact" },
 ] as const;
+
+/** Section roots highlight for their child routes too (e.g. /projects/foo). */
+const isNavActive = (to: string, pathname: string) =>
+  to === "/" ? pathname === "/" : pathname === to || pathname.startsWith(to + "/");
+
+/** Four accent-palette dots; the active one is ringed. */
+function AccentPicker() {
+  const { accent, setAccent } = useTheme();
+  return (
+    <div className="flex items-center gap-2" role="group" aria-label="Accent color">
+      {ACCENTS.map((a) => (
+        <button
+          key={a.id}
+          onClick={() => setAccent(a.id)}
+          aria-label={`${a.label} accent`}
+          aria-pressed={accent === a.id}
+          title={a.label}
+          className={
+            "h-4 w-4 rounded-full border border-border transition-transform motion-safe:hover:scale-110 " +
+            (accent === a.id ? "ring-2 ring-ring ring-offset-2 ring-offset-sidebar" : "")
+          }
+          style={{ backgroundColor: a.swatch }}
+        />
+      ))}
+    </div>
+  );
+}
 
 export function Sidebar() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
@@ -39,7 +66,7 @@ export function Sidebar() {
 
       <nav className="mt-12 flex flex-col gap-1">
         {nav.map((item) => {
-          const active = pathname === item.to;
+          const active = isNavActive(item.to, pathname);
           return (
             <Link
               key={item.to}
@@ -79,9 +106,7 @@ export function Sidebar() {
 
       <div className="mt-auto space-y-3">
         <div className="flex items-center justify-between border-t border-sidebar-border pt-4">
-          <span className="font-mono text-xs text-muted-foreground">
-            {theme === "dark" ? "dark" : "light"}
-          </span>
+          <AccentPicker />
           <button
             onClick={toggle}
             aria-label="Toggle theme"
@@ -200,7 +225,7 @@ export function MobileNav() {
         <nav className="fixed inset-x-0 bottom-0 top-16 z-30 flex flex-col overflow-y-auto bg-sidebar px-5 py-6">
           <div className="flex flex-col gap-1">
             {nav.map((item) => (
-              <Link key={item.to} to={item.to} className={linkClass(pathname === item.to)}>
+              <Link key={item.to} to={item.to} className={linkClass(isNavActive(item.to, pathname))}>
                 {item.label}
               </Link>
             ))}
@@ -220,7 +245,8 @@ export function MobileNav() {
             </div>
           )}
 
-          <div className="mt-auto flex items-center justify-between gap-3 border-t border-sidebar-border pt-4">
+          <div className="mt-auto flex flex-wrap items-center justify-between gap-3 border-t border-sidebar-border pt-4">
+            <AccentPicker />
             <button
               onClick={toggle}
               aria-label="Toggle theme"

@@ -11,6 +11,9 @@ export const getRouter = () => {
     context: { queryClient },
     scrollRestoration: true,
     defaultPreloadStaleTime: 0,
+    // Native crossfade between routes where the View Transitions API exists;
+    // styles.css disables it under prefers-reduced-motion.
+    defaultViewTransition: true,
   });
 
   // Streams the server-side React Query cache to the client so data fetched in

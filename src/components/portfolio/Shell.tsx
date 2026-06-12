@@ -32,6 +32,7 @@ function Footer() {
   const externalLink = (url: string) => (url.startsWith("http") ? url : undefined);
   const github = externalLink(settings.github_url);
   const linkedin = externalLink(settings.linkedin_url);
+  const resume = externalLink(settings.resume_url);
 
   return (
     <footer className="mt-20 border-t border-border pt-6">
@@ -48,6 +49,11 @@ function Footer() {
           {linkedin && (
             <a href={linkedin} target="_blank" rel="noreferrer" className="hover:text-foreground">
               LinkedIn
+            </a>
+          )}
+          {resume && (
+            <a href={resume} target="_blank" rel="noreferrer" className="hover:text-foreground">
+              Résumé
             </a>
           )}
           <Link to="/contact" className="hover:text-foreground">
