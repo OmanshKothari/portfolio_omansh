@@ -1,9 +1,11 @@
 import { createFileRoute, Link, useParams } from "@tanstack/react-router";
+import { useRef } from "react";
 import { Shell, Tag } from "@/components/portfolio/Shell";
 import { useQuery } from "@tanstack/react-query";
 import { projectQuery, siteSettingsQuery } from "@/lib/queries";
 import { ProjectDetailSkeleton } from "@/components/skeletons/ProjectSkeletons";
 import { SITE_NAME } from "@/lib/site-config";
+import { useRichContent } from "@/components/portfolio/rich-content";
 
 export const Route = createFileRoute("/projects/$slug")({
   // Resolve on the server so SSR ships the article (not a skeleton) and the
@@ -31,6 +33,10 @@ export const Route = createFileRoute("/projects/$slug")({
 function ProjectDetail() {
   const { slug } = useParams({ from: "/projects/$slug" });
   const { data, isLoading } = useQuery(projectQuery(slug));
+  const articleRef = useRef<HTMLDivElement>(null);
+
+  // Code highlighting + mermaid diagrams in the long-form write-up.
+  useRichContent(articleRef, data?.long_description);
 
   if (isLoading) {
     return (
@@ -102,6 +108,7 @@ function ProjectDetail() {
 
         {data.long_description && (
           <div
+            ref={articleRef}
             className="prose-portfolio mt-8"
             dangerouslySetInnerHTML={{ __html: data.long_description }}
           />
